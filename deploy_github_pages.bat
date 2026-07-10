@@ -24,12 +24,12 @@ git push -u origin codex/firebase-web || goto :push_error
 
 echo.
 echo Triggering GitHub Pages workflow...
-gh workflow run "Deploy GitHub Pages" --repo Noah-jo/license-manager-firebase --ref codex/firebase-web
+gh workflow run "Deploy to GitHub Pages" --repo Noah-jo/license-manager-firebase --ref codex/firebase-web
 
 echo.
 echo Waiting for workflow to start...
 timeout /t 8 /nobreak >nul
-gh run list --repo Noah-jo/license-manager-firebase --workflow "Deploy GitHub Pages" --limit 5
+gh run list --repo Noah-jo/license-manager-firebase --workflow "Deploy to GitHub Pages" --limit 5
 
 echo.
 echo GitHub Pages URL should be:
