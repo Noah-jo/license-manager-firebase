@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>License Manager</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main id="auth-screen" class="auth-shell">
+    <section class="auth-panel">
+      <div>
+        <p class="eyebrow">License Manager</p>
+        <h1>軟件授權管理</h1>
+        <p class="muted">請輸入共用密碼後進入系統。</p>
+      </div>
+
+      <form id="auth-form" class="stack">
+        <label>
+          密碼
+          <input id="gate-password" type="password" autocomplete="current-password" required>
+        </label>
+        <button id="auth-submit" type="submit">登入</button>
+      </form>
+      <p id="auth-message" class="message"></p>
+    </section>
+  </main>
+
+  <main id="app-screen" class="app-shell hidden">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">License Manager</p>
+        <h1>軟件授權管理</h1>
+      </div>
+      <div class="user-box">
+        <span id="current-user">已登入</span>
+        <button id="logout" type="button" class="secondary">登出</button>
+      </div>
+    </header>
+
+    <section class="stats-grid">
+      <article><span>總數</span><strong id="stat-total">0</strong></article>
+      <article><span>已過期</span><strong id="stat-expired">0</strong></article>
+      <article><span>30 天內到期</span><strong id="stat-expiring">0</strong></article>
+      <article><span>總金額 HK$</span><strong id="stat-total-price">0.00</strong></article>
+    </section>
+
+    <section class="toolbar">
+      <label>
+        搜尋
+        <input id="search" type="search" placeholder="名稱、PIC、使用者、付款方式、備註">
+      </label>
+      <label>
+        狀態
+        <select id="status-filter">
+          <option value="all">全部</option>
+          <option value="expired">已過期</option>
+          <option value="expiring">快到期</option>
+          <option value="active">正常中</option>
+        </select>
+      </label>
+      <label>
+        快到期天數
+        <input id="expiring-days" type="number" min="1" value="30">
+      </label>
+      <div class="toolbar-actions">
+        <button id="export-csv" type="button" class="secondary">匯出 CSV</button>
+        <button id="export-excel" type="button" class="secondary">匯出 Excel</button>
+      </div>
+    </section>
+
+    <section class="editor">
+      <h2 id="form-title">新增授權</h2>
+      <form id="license-form" class="license-form">
+        <input id="license-id" type="hidden">
+        <label>軟件名稱 <input id="name" required></label>
+        <label>席位數 / 方案 <input id="seats" required></label>
+        <label>到期日 <input id="expiry" type="date" required></label>
+        <label>付款方式 <input id="payment-method"></label>
+        <label>價格 HK$ <input id="price" type="number" step="0.01" min="0"></label>
+        <label>PIC <input id="pic"></label>
+        <label>使用者 / 部門 <input id="user"></label>
+        <label>訂閱連結 <input id="sub-link" type="url"></label>
+        <label class="wide">備註 <input id="remarks"></label>
+        <div class="form-actions">
+          <button type="submit">儲存</button>
+          <button id="cancel-edit" type="button" class="secondary hidden">取消編輯</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="table-section">
+      <div class="section-head">
+        <h2>授權清單</h2>
+        <span id="visible-count" class="muted">0 筆</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>軟件名稱</th>
+              <th>席位</th>
+              <th>到期日</th>
+              <th>狀態</th>
+              <th>價格</th>
+              <th>付款方式</th>
+              <th>PIC</th>
+              <th>使用者</th>
+              <th>連結</th>
+              <th>備註</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="licenses-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="editor">
+      <h2>設定</h2>
+      <form id="settings-form" class="license-form">
+        <label>新共用密碼 <input id="new-password" type="password" minlength="6" required></label>
+        <label>確認新密碼 <input id="confirm-password" type="password" minlength="6" required></label>
+        <div class="form-actions">
+          <button type="submit">更新密碼</button>
+        </div>
+      </form>
+      <p id="settings-message" class="message"></p>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
+
