@@ -1,0 +1,8 @@
+node_modules/
+.firebase/
+.config/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.local
+licenses-export.json
