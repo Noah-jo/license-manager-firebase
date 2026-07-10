@@ -41,6 +41,12 @@ const licensesBody = $("licenses-body");
 const settingsForm = $("settings-form");
 const settingsMessage = $("settings-message");
 
+$("today-date").textContent = new Intl.DateTimeFormat("zh-HK", {
+  year: "numeric",
+  month: "long",
+  day: "numeric"
+}).format(new Date());
+
 function showOnly(screen) {
   authScreen.classList.toggle("hidden", screen !== "auth");
   appScreen.classList.toggle("hidden", screen !== "app");
@@ -96,10 +102,10 @@ function getDaysLeft(expiry) {
 
 function getStatus(item, expiringDays = 30) {
   const daysLeft = getDaysLeft(item.expiry);
-  if (daysLeft === null) return { type: "unknown", label: "日期異常", daysLeft };
-  if (daysLeft < 0) return { type: "expired", label: `已過期 ${Math.abs(daysLeft)} 天`, daysLeft };
-  if (daysLeft <= expiringDays) return { type: "expiring", label: `剩餘 ${daysLeft} 天`, daysLeft };
-  return { type: "active", label: `尚餘 ${daysLeft} 天`, daysLeft };
+  if (daysLeft === null) return { type: "unknown", label: "日期未設定", daysLeft };
+  if (daysLeft < 0) return { type: "expired", label: `已過期 ${Math.abs(daysLeft)} 日`, daysLeft };
+  if (daysLeft <= expiringDays) return { type: "expiring", label: `剩餘 ${daysLeft} 日`, daysLeft };
+  return { type: "active", label: `尚餘 ${daysLeft} 日`, daysLeft };
 }
 
 function getFilters() {
@@ -150,7 +156,7 @@ function renderStats(visible) {
   $("stat-expired").textContent = expired;
   $("stat-expiring").textContent = expiring;
   $("stat-total-price").textContent = totalPrice.toFixed(2);
-  $("visible-count").textContent = `${visible.length} 筆`;
+  $("visible-count").textContent = `${visible.length} 項結果`;
 }
 
 function renderLicenses() {
@@ -159,7 +165,11 @@ function renderLicenses() {
   renderStats(visible);
 
   if (!visible.length) {
-    licensesBody.innerHTML = `<tr><td colspan="11" class="muted">沒有符合條件的授權資料。</td></tr>`;
+    licensesBody.innerHTML = `
+      <tr><td colspan="11" class="empty-row">
+        <strong>暫時沒有授權資料</strong>
+        <span class="muted">新增第一項授權，或調整上方搜尋條件。</span>
+      </td></tr>`;
     return;
   }
 
@@ -313,11 +323,18 @@ async function unlockWithPassword(password) {
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setMessage(authMessage);
+  const submitButton = $("auth-submit");
+  const originalLabel = submitButton.innerHTML;
+  submitButton.disabled = true;
+  submitButton.innerHTML = "<span>正在驗證...</span><span aria-hidden=\"true\">···</span>";
   try {
     await unlockWithPassword($("gate-password").value);
     $("gate-password").value = "";
   } catch (error) {
     setMessage(authMessage, formatFirebaseError(error));
+  } finally {
+    submitButton.disabled = false;
+    submitButton.innerHTML = originalLabel;
   }
 });
 
@@ -355,6 +372,7 @@ licensesBody.addEventListener("click", async (event) => {
 settingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setMessage(settingsMessage);
+  settingsMessage.classList.remove("success");
   const newPassword = $("new-password").value;
   const confirmPassword = $("confirm-password").value;
   if (newPassword !== confirmPassword) {
@@ -367,6 +385,7 @@ settingsForm.addEventListener("submit", async (event) => {
     updatedAt: serverTimestamp()
   }, { merge: true });
   settingsForm.reset();
+  settingsMessage.classList.add("success");
   setMessage(settingsMessage, "密碼已更新。固定後備密碼仍可登入。");
 });
 

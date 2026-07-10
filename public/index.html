@@ -3,133 +3,196 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>License Manager</title>
+  <meta name="theme-color" content="#102a43">
+  <title>License Manager | 軟件授權管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main id="auth-screen" class="auth-shell">
-    <section class="auth-panel">
-      <div>
-        <p class="eyebrow">License Manager</p>
-        <h1>軟件授權管理</h1>
-        <p class="muted">請輸入共用密碼後進入系統。</p>
+    <section class="auth-visual" aria-hidden="true">
+      <div class="auth-orbit orbit-one"></div>
+      <div class="auth-orbit orbit-two"></div>
+      <div class="auth-brand">
+        <span class="brand-mark">LM</span>
+        <p>NOAH OPERATIONS / 01</p>
       </div>
+      <div class="auth-statement">
+        <p class="kicker">License intelligence</p>
+        <h2>所有授權，<br><em>一目了然。</em></h2>
+        <p>集中管理到期日、費用與負責人，讓每次續約都準時而清楚。</p>
+      </div>
+      <div class="visual-footer">
+        <span>SECURE ACCESS</span>
+        <span>FIREBASE SYNC</span>
+        <span>HK / 2026</span>
+      </div>
+    </section>
 
-      <form id="auth-form" class="stack">
-        <label>
-          密碼
-          <input id="gate-password" type="password" autocomplete="current-password" required>
-        </label>
-        <button id="auth-submit" type="submit">登入</button>
-      </form>
-      <p id="auth-message" class="message"></p>
+    <section class="auth-panel">
+      <div class="auth-panel-inner">
+        <div class="mobile-brand"><span class="brand-mark">LM</span> LICENSE MANAGER</div>
+        <p class="eyebrow">Welcome back</p>
+        <h1>登入管理中心</h1>
+        <p class="muted auth-copy">輸入共用密碼，查看及管理所有軟件授權。</p>
+
+        <form id="auth-form" class="stack">
+          <label for="gate-password">存取密碼</label>
+          <div class="input-with-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5z"/></svg>
+            <input id="gate-password" type="password" autocomplete="current-password" placeholder="請輸入密碼" required autofocus>
+          </div>
+          <button id="auth-submit" type="submit" class="primary large">
+            <span>進入系統</span><span aria-hidden="true">→</span>
+          </button>
+        </form>
+        <p id="auth-message" class="message" role="alert"></p>
+        <p class="auth-note"><span></span> 資料已透過 Firebase 雲端同步</p>
+      </div>
     </section>
   </main>
 
   <main id="app-screen" class="app-shell hidden">
     <header class="topbar">
-      <div>
-        <p class="eyebrow">License Manager</p>
-        <h1>軟件授權管理</h1>
-      </div>
+      <a class="app-brand" href="#top" aria-label="返回頁首">
+        <span class="brand-mark">LM</span>
+        <span><strong>License Manager</strong><small>授權營運中心</small></span>
+      </a>
+      <nav class="topnav" aria-label="主要導覽">
+        <a href="#overview">總覽</a>
+        <a href="#add-license">新增授權</a>
+        <a href="#license-list">授權清單</a>
+        <a href="#settings">設定</a>
+      </nav>
       <div class="user-box">
+        <span class="connection-dot" title="已連線"></span>
         <span id="current-user">已登入</span>
-        <button id="logout" type="button" class="secondary">登出</button>
+        <button id="logout" type="button" class="ghost compact">登出</button>
       </div>
     </header>
 
-    <section class="stats-grid">
-      <article><span>總數</span><strong id="stat-total">0</strong></article>
-      <article><span>已過期</span><strong id="stat-expired">0</strong></article>
-      <article><span>30 天內到期</span><strong id="stat-expiring">0</strong></article>
-      <article><span>總金額 HK$</span><strong id="stat-total-price">0.00</strong></article>
-    </section>
-
-    <section class="toolbar">
-      <label>
-        搜尋
-        <input id="search" type="search" placeholder="名稱、PIC、使用者、付款方式、備註">
-      </label>
-      <label>
-        狀態
-        <select id="status-filter">
-          <option value="all">全部</option>
-          <option value="expired">已過期</option>
-          <option value="expiring">快到期</option>
-          <option value="active">正常中</option>
-        </select>
-      </label>
-      <label>
-        快到期天數
-        <input id="expiring-days" type="number" min="1" value="30">
-      </label>
-      <div class="toolbar-actions">
-        <button id="export-csv" type="button" class="secondary">匯出 CSV</button>
-        <button id="export-excel" type="button" class="secondary">匯出 Excel</button>
-      </div>
-    </section>
-
-    <section class="editor">
-      <h2 id="form-title">新增授權</h2>
-      <form id="license-form" class="license-form">
-        <input id="license-id" type="hidden">
-        <label>軟件名稱 <input id="name" required></label>
-        <label>席位數 / 方案 <input id="seats" required></label>
-        <label>到期日 <input id="expiry" type="date" required></label>
-        <label>付款方式 <input id="payment-method"></label>
-        <label>價格 HK$ <input id="price" type="number" step="0.01" min="0"></label>
-        <label>PIC <input id="pic"></label>
-        <label>使用者 / 部門 <input id="user"></label>
-        <label>訂閱連結 <input id="sub-link" type="url"></label>
-        <label class="wide">備註 <input id="remarks"></label>
-        <div class="form-actions">
-          <button type="submit">儲存</button>
-          <button id="cancel-edit" type="button" class="secondary hidden">取消編輯</button>
+    <div id="top" class="dashboard">
+      <section id="overview" class="page-heading">
+        <div>
+          <p class="eyebrow">Operations dashboard</p>
+          <h1>軟件授權管理</h1>
+          <p class="muted">快速掌握授權狀態、到期風險與整體支出。</p>
         </div>
-      </form>
-    </section>
-
-    <section class="table-section">
-      <div class="section-head">
-        <h2>授權清單</h2>
-        <span id="visible-count" class="muted">0 筆</span>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>軟件名稱</th>
-              <th>席位</th>
-              <th>到期日</th>
-              <th>狀態</th>
-              <th>價格</th>
-              <th>付款方式</th>
-              <th>PIC</th>
-              <th>使用者</th>
-              <th>連結</th>
-              <th>備註</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="licenses-body"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="editor">
-      <h2>設定</h2>
-      <form id="settings-form" class="license-form">
-        <label>新共用密碼 <input id="new-password" type="password" minlength="6" required></label>
-        <label>確認新密碼 <input id="confirm-password" type="password" minlength="6" required></label>
-        <div class="form-actions">
-          <button type="submit">更新密碼</button>
+        <div class="today-card">
+          <span>今日</span>
+          <strong id="today-date">--</strong>
         </div>
-      </form>
-      <p id="settings-message" class="message"></p>
-    </section>
+      </section>
+
+      <section class="stats-grid" aria-label="授權統計">
+        <article class="stat-card stat-total">
+          <div class="stat-icon">∑</div>
+          <div><span>授權總數</span><strong id="stat-total">0</strong><small>目前篩選結果</small></div>
+        </article>
+        <article class="stat-card stat-expired">
+          <div class="stat-icon">!</div>
+          <div><span>已經到期</span><strong id="stat-expired">0</strong><small>需要立即處理</small></div>
+        </article>
+        <article class="stat-card stat-expiring">
+          <div class="stat-icon">↘</div>
+          <div><span>即將到期</span><strong id="stat-expiring">0</strong><small>依下方日數計算</small></div>
+        </article>
+        <article class="stat-card stat-price">
+          <div class="stat-icon">$</div>
+          <div><span>授權總值</span><strong><small>HK$</small> <span id="stat-total-price">0.00</span></strong><small>目前篩選結果</small></div>
+        </article>
+      </section>
+
+      <section class="toolbar" aria-label="搜尋及篩選">
+        <div class="toolbar-title">
+          <span class="section-number">01</span>
+          <div><strong>搜尋與篩選</strong><small>快速縮窄清單範圍</small></div>
+        </div>
+        <label class="search-field" for="search">
+          <span>關鍵字搜尋</span>
+          <div class="input-with-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+            <input id="search" type="search" placeholder="搜尋名稱、PIC、用戶或備註">
+          </div>
+        </label>
+        <label for="status-filter">授權狀態
+          <select id="status-filter">
+            <option value="all">全部狀態</option>
+            <option value="expired">已經到期</option>
+            <option value="expiring">即將到期</option>
+            <option value="active">仍然有效</option>
+          </select>
+        </label>
+        <label for="expiring-days">到期提示日數
+          <div class="days-input"><input id="expiring-days" type="number" min="1" value="30"><span>日</span></div>
+        </label>
+        <div class="toolbar-actions">
+          <button id="export-csv" type="button" class="secondary">匯出 CSV</button>
+          <button id="export-excel" type="button" class="primary">匯出 Excel</button>
+        </div>
+      </section>
+
+      <section id="add-license" class="panel editor">
+        <div class="panel-heading">
+          <div class="heading-group"><span class="section-number">02</span><div><h2 id="form-title">新增授權</h2><p>輸入授權資料，必填欄位以 * 標示</p></div></div>
+          <span class="panel-tag">NEW RECORD</span>
+        </div>
+        <form id="license-form" class="license-form">
+          <input id="license-id" type="hidden">
+          <label for="name">軟件名稱 *<input id="name" placeholder="例如 Adobe Creative Cloud" required></label>
+          <label for="seats">數量 / 帳戶 *<input id="seats" placeholder="例如 5 席" required></label>
+          <label for="expiry">到期日期 *<input id="expiry" type="date" required></label>
+          <label for="price">價錢 HK$<input id="price" type="number" step="0.01" min="0" placeholder="0.00"></label>
+          <label for="payment-method">付款方式<input id="payment-method" placeholder="例如公司信用卡"></label>
+          <label for="pic">PIC<input id="pic" placeholder="負責人姓名"></label>
+          <label for="user">使用者 / 部門<input id="user" placeholder="使用者或部門"></label>
+          <label for="sub-link">訂閱連結<input id="sub-link" type="url" placeholder="https://"></label>
+          <label class="wide" for="remarks">備註<input id="remarks" placeholder="補充資料、續約安排或注意事項"></label>
+          <div class="form-actions">
+            <button type="submit" class="primary save-button">儲存授權 <span aria-hidden="true">→</span></button>
+            <button id="cancel-edit" type="button" class="secondary hidden">取消編輯</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="license-list" class="panel table-section">
+        <div class="panel-heading list-heading">
+          <div class="heading-group"><span class="section-number">03</span><div><h2>授權清單</h2><p>依到期日順序顯示，風險項目會自動高亮</p></div></div>
+          <span id="visible-count" class="result-count">0 項結果</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>軟件名稱</th><th>數量 / 帳戶</th><th>到期日期</th><th>狀態</th><th>價錢 HK$</th>
+              <th>付款方式</th><th>PIC</th><th>使用者</th><th>連結</th><th>備註</th><th>操作</th>
+            </tr></thead>
+            <tbody id="licenses-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <details id="settings" class="panel settings-panel">
+        <summary class="panel-heading">
+          <div class="heading-group"><span class="section-number">04</span><div><h2>安全設定</h2><p>更改所有使用者共用的登入密碼</p></div></div>
+          <span class="summary-action">展開設定 <b>+</b></span>
+        </summary>
+        <div class="settings-content">
+          <div class="settings-note"><strong>登入密碼</strong><p>更改後，其他已登入的裝置仍可使用至登出為止。永久備用密碼不會受影響。</p></div>
+          <form id="settings-form" class="settings-form">
+            <label for="new-password">新密碼<input id="new-password" type="password" minlength="6" placeholder="最少 6 個字元" required></label>
+            <label for="confirm-password">確認新密碼<input id="confirm-password" type="password" minlength="6" placeholder="再次輸入新密碼" required></label>
+            <div class="form-actions"><button type="submit" class="primary">更新密碼</button></div>
+          </form>
+          <p id="settings-message" class="message" role="status"></p>
+        </div>
+      </details>
+
+      <footer class="app-footer"><span>LICENSE MANAGER</span><span>Firebase Cloud Sync · GitHub Pages</span></footer>
+    </div>
   </main>
 
   <script type="module" src="./app.js"></script>
 </body>
 </html>
-
