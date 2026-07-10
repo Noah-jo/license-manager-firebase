@@ -5,7 +5,6 @@ This is the cloud web version of the local Flask/SQLite License Manager.
 ## What it uses
 
 - Firebase Hosting for the static web app
-- Firebase Authentication Anonymous provider for Firestore access
 - Cloud Firestore for license data and settings
 - A shared password gate before the app UI opens
 
@@ -18,5 +17,4 @@ This is the cloud web version of the local Flask/SQLite License Manager.
 
 ## Security note
 
-This is a convenient shared-password gate for a small private tool. Because it is a static frontend app, it is not the same as server-side password verification. If stricter access control is needed later, add Cloud Functions or switch back to Firebase Auth user accounts.
-
+This is a convenient shared-password gate for a small private tool. Because it is a static frontend app, it is not the same as server-side password verification. The Firestore rules are public so the GitHub Pages app can work without a backend login service. If stricter access control is needed later, add Cloud Functions or switch back to Firebase Auth user accounts.

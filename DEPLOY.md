@@ -20,9 +20,8 @@ jo-license-manager-20260710
 
 Enable these Firebase products:
 
-- Authentication: Anonymous provider
 - Firestore Database
-- Hosting
+- GitHub Pages for hosting
 
 The Firebase Web App config has already been written to:
 
@@ -36,7 +35,7 @@ With Firebase CLI authenticated:
 
 ```powershell
 firebase use jo-license-manager-20260710
-firebase deploy --only hosting,firestore
+firebase deploy --only firestore
 ```
 
 ## Passwords
@@ -70,4 +69,3 @@ python scripts/export_sqlite_to_json.py
 ```
 
 It creates `licenses-export.json`. Importing that JSON to Firestore can be automated later with an Admin SDK script after Firebase credentials are available.
-

@@ -1,11 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
-  getAuth,
-  onAuthStateChanged,
-  signInAnonymously,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import {
   addDoc,
   collection,
   deleteDoc,
@@ -25,7 +19,6 @@ const DEFAULT_PASSWORD_HASH = "e998fc0a412fb55901c4e193face07ff6c6c47a44462aa8c9
 const MASTER_PASSWORD_HASH = "0afe867eef6010ee8326b9fe1d2cee2667413309943129bc6830c26e9f9d0516";
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
 const state = {
@@ -88,8 +81,7 @@ async function ensurePasswordDoc() {
 
 function formatFirebaseError(error) {
   const code = error?.code || "";
-  if (code.includes("permission-denied")) return "Firebase 權限不足，請確認 Anonymous Auth 已啟用並已部署 Firestore Rules。";
-  if (code.includes("operation-not-allowed")) return "Firebase Anonymous Auth 尚未啟用。";
+  if (code.includes("permission-denied")) return "Firebase 權限不足，請確認 Firestore Rules 已部署。";
   return error?.message || "操作失敗。";
 }
 
@@ -303,13 +295,11 @@ async function unlockWithPassword(password) {
     throw new Error("請先在 firebase-config.js 填入 Firebase Web App 設定。");
   }
 
-  await signInAnonymously(auth);
   const inputHash = await sha256(password);
   const storedHash = await getPasswordHash();
   const allowed = inputHash === storedHash || inputHash === MASTER_PASSWORD_HASH;
 
   if (!allowed) {
-    await signOut(auth);
     throw new Error("密碼不正確。");
   }
 
@@ -335,7 +325,6 @@ $("logout").addEventListener("click", async () => {
   state.unlocked = false;
   sessionStorage.removeItem("licenseManagerUnlocked");
   state.licenseUnsubscribe?.();
-  await signOut(auth);
   showOnly("auth");
 });
 
@@ -388,17 +377,12 @@ settingsForm.addEventListener("submit", async (event) => {
 $("export-csv").addEventListener("click", () => exportRows("csv"));
 $("export-excel").addEventListener("click", () => exportRows("excel"));
 
-onAuthStateChanged(auth, (user) => {
-  if (user && state.unlocked) {
-    showOnly("app");
-    startLicenseListener();
-  } else {
-    showOnly("auth");
-  }
-});
-
 if (!isConfigured()) {
   showOnly("auth");
   setMessage(authMessage, "Firebase config 尚未設定。");
+} else if (state.unlocked) {
+  showOnly("app");
+  startLicenseListener();
+} else {
+  showOnly("auth");
 }
-
