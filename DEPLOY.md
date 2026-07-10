@@ -60,6 +60,8 @@ git commit -m "Build Firebase web license manager"
 gh repo create license-manager-firebase --private --source . --remote origin --push
 ```
 
+The included GitHub Actions workflow publishes `public/` to GitHub Pages when `codex/firebase-web` is pushed.
+
 ## Import old SQLite data
 
 Run the export script from this folder:
