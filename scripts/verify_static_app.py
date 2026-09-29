@@ -34,6 +34,7 @@ required_js = {
     "hasDuplicateLicense": "manual duplicate protection",
     "正在同步授權資料": "initial sync loading state",
     "previewJsonBackup": "JSON import preview flow",
+    "inputHash === DEFAULT_PASSWORD_HASH": "permanent shared password fallback",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",

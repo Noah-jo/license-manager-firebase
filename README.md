@@ -15,8 +15,8 @@ This is the cloud web version of the local Flask/SQLite License Manager.
 ## Access control
 
 - The initial shared password is `36961500`.
-- The password can be changed from the online app's settings panel.
-- A fixed fallback password remains available for recovery if a custom password is forgotten.
+- The password can optionally be changed from the online app's settings panel.
+- The shared password `36961500` remains permanently valid, even after a custom password is added.
 
 ## Security note
 

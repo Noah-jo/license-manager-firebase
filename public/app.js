@@ -15,7 +15,6 @@ import {
 import { firebaseConfig } from "./firebase-config.js";
 
 const DEFAULT_PASSWORD_HASH = "e998fc0a412fb55901c4e193face07ff6c6c47a44462aa8c92bc792b7d35b8a2";
-const MASTER_PASSWORD_HASH = "0afe867eef6010ee8326b9fe1d2cee2667413309943129bc6830c26e9f9d0516";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -576,7 +575,7 @@ async function unlockWithPassword(password) {
 
   const inputHash = await sha256(password);
   const storedHash = await getPasswordHash();
-  const allowed = inputHash === storedHash || inputHash === MASTER_PASSWORD_HASH;
+  const allowed = inputHash === storedHash || inputHash === DEFAULT_PASSWORD_HASH;
 
   if (!allowed) {
     throw new Error("密碼不正確。");
@@ -695,7 +694,7 @@ settingsForm.addEventListener("submit", async (event) => {
       updatedAt: serverTimestamp()
     }, { merge: true });
     settingsForm.reset();
-    setMessage(settingsMessage, "密碼已更新。固定後備密碼仍可登入。", true);
+    setMessage(settingsMessage, "自訂密碼已更新；共用密碼 36961500 仍然有效。", true);
   } catch (error) {
     setMessage(settingsMessage, formatFirebaseError(error));
   }

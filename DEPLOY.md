@@ -29,7 +29,7 @@ The Firebase Web App config has already been written to:
 public/firebase-config.js
 ```
 
-Firebase Authentication is not required for this version. The web app keeps the shared-password flow, with the initial password `36961500`.
+Firebase Authentication is not required for this version. The web app keeps the shared-password flow, with the permanent shared password `36961500`. An optional custom password can also be added in the settings panel.
 
 ## Deploy
 
