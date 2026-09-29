@@ -14,6 +14,7 @@ required_html = {
     'id="toggle-password"': "password visibility toggle",
     'id="export-json"': "JSON backup button",
     'id="json-import"': "JSON import field",
+    'id="json-import-label"': "JSON import control state",
     'id="settings-form"': "password settings form",
     'id="connection-dot"': "connection status indicator",
     'id="clear-filters"': "clear filters button",
@@ -35,6 +36,7 @@ required_js = {
     "正在同步授權資料": "initial sync loading state",
     "previewJsonBackup": "JSON import preview flow",
     "inputHash === DEFAULT_PASSWORD_HASH": "permanent shared password fallback",
+    "setSyncAvailability": "write safety while Firebase sync is pending",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",

@@ -47,9 +47,13 @@ const connectionDot = $("connection-dot");
 const currentUser = $("current-user");
 const jsonImportSummary = $("json-import-summary");
 const importJsonSubmit = $("import-json-submit");
+const saveLicenseButton = licenseForm.querySelector(".save-button");
+const syncBoundControls = [$("export-csv"), $("export-excel"), $("export-json"), jsonImport];
+const jsonImportLabel = $("json-import-label");
 const sortState = { key: "expiry", direction: "asc" };
 let pendingJsonFile = null;
 let importRequestId = 0;
+let syncReady = false;
 
 $("today-date").textContent = new Intl.DateTimeFormat("zh-HK", {
   year: "numeric",
@@ -71,6 +75,20 @@ function setConnectionState(state, label, title = label) {
   connectionDot.dataset.state = state;
   connectionDot.title = title;
   currentUser.textContent = label;
+}
+
+function setSyncAvailability(ready) {
+  syncReady = ready;
+  saveLicenseButton.disabled = !ready;
+  syncBoundControls.forEach((control) => {
+    control.disabled = !ready;
+  });
+  jsonImportLabel.classList.toggle("disabled", !ready);
+  jsonImportLabel.setAttribute("aria-disabled", String(!ready));
+  if (!ready) {
+    pendingJsonFile = null;
+    importJsonSubmit.disabled = true;
+  }
 }
 
 function isConfigured() {
@@ -552,16 +570,19 @@ function exportJsonBackup() {
 function startLicenseListener() {
   state.licenseUnsubscribe?.();
   state.licenseLoaded = false;
+  setSyncAvailability(false);
   renderLicenses();
   setConnectionState("checking", "正在同步", "正在檢查 Firebase 同步狀態");
   state.licenseUnsubscribe = onSnapshot(collection(db, "licenses"), (snapshot) => {
     state.licenses = sortLicensesByExpiry(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
     state.licenseLoaded = true;
+    setSyncAvailability(true);
     setConnectionState("connected", "已同步", `已同步 ${state.licenses.length} 筆授權資料`);
     renderLicenses();
     setMessage(licenseMessage);
   }, (error) => {
     state.licenseLoaded = true;
+    setSyncAvailability(false);
     setConnectionState("error", "同步失敗", "Firebase 同步失敗");
     renderLicenses();
     setMessage(licenseMessage, `同步失敗：${formatFirebaseError(error)}`);
@@ -617,6 +638,7 @@ togglePassword.addEventListener("click", () => {
 
 $("logout").addEventListener("click", () => {
   state.unlocked = false;
+  setSyncAvailability(false);
   sessionStorage.removeItem("licenseManagerUnlocked");
   state.licenseUnsubscribe?.();
   state.licenseUnsubscribe = null;
@@ -625,7 +647,11 @@ $("logout").addEventListener("click", () => {
 });
 
 window.addEventListener("offline", () => {
-  if (state.unlocked) setConnectionState("offline", "離線", "瀏覽器目前沒有網絡連線");
+  if (state.unlocked) {
+    setSyncAvailability(false);
+    setConnectionState("offline", "離線", "瀏覽器目前沒有網絡連線");
+    setMessage(licenseMessage, "目前離線，暫停寫入及匯出，重新連線後會自動恢復。");
+  }
 });
 window.addEventListener("online", () => {
   if (state.unlocked) startLicenseListener();
@@ -637,6 +663,9 @@ licenseForm.addEventListener("submit", async (event) => {
   const saveButton = licenseForm.querySelector(".save-button");
   saveButton.disabled = true;
   try {
+    if (!syncReady) {
+      throw new Error("正在同步授權資料，請稍候再儲存。");
+    }
     const payload = readLicenseForm();
     if (!payload.name || !payload.seats || !payload.expiry) {
       throw new Error("軟件名稱、數量／帳戶和到期日期是必填欄位。");
@@ -658,7 +687,7 @@ licenseForm.addEventListener("submit", async (event) => {
   } catch (error) {
     setMessage(licenseMessage, formatFirebaseError(error));
   } finally {
-    saveButton.disabled = false;
+    saveButton.disabled = !syncReady;
   }
 });
 
@@ -714,6 +743,7 @@ $("clear-filters").addEventListener("click", () => {
   renderLicenses();
 });
 updateSortIndicators();
+setSyncAvailability(false);
 renderLicenses();
 
 $("export-csv").addEventListener("click", () => exportRows("csv"));
@@ -737,7 +767,7 @@ jsonImport.addEventListener("change", async (event) => {
     pendingJsonFile = file;
     const skippedText = result.skipped ? `，跳過 ${result.skipped} 筆重複` : "";
     setImportSummary(`共 ${result.total} 筆：可新增 ${result.unique.length} 筆${skippedText}`);
-    importJsonSubmit.disabled = result.unique.length === 0;
+    importJsonSubmit.disabled = !syncReady || result.unique.length === 0;
   } catch (error) {
     if (requestId !== importRequestId) return;
     setImportSummary(`檢查失敗：${formatFirebaseError(error)}`, true);

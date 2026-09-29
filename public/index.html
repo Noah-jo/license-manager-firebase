@@ -130,10 +130,10 @@
           <div class="days-input"><input id="expiring-days" type="number" min="1" value="30"><span>日</span></div>
         </label>
         <div class="toolbar-actions">
-          <button id="export-csv" type="button" class="secondary">匯出 CSV</button>
-          <button id="export-excel" type="button" class="primary">匯出 Excel</button>
-          <button id="export-json" type="button" class="secondary">備份 JSON</button>
-          <label class="secondary import-button" for="json-import">匯入 JSON<input id="json-import" type="file" accept="application/json,.json" hidden></label>
+          <button id="export-csv" type="button" class="secondary" disabled>匯出 CSV</button>
+          <button id="export-excel" type="button" class="primary" disabled>匯出 Excel</button>
+          <button id="export-json" type="button" class="secondary" disabled>備份 JSON</button>
+          <label id="json-import-label" class="secondary import-button disabled" for="json-import" aria-disabled="true">匯入 JSON<input id="json-import" type="file" accept="application/json,.json" hidden disabled></label>
           <span id="json-import-summary" class="import-summary" role="status">選擇檔案以先檢查差異</span>
           <button id="import-json-submit" type="button" class="secondary" disabled>開始匯入</button>
           <button id="clear-filters" type="button" class="secondary">清除篩選</button>
@@ -157,7 +157,7 @@
           <label for="sub-link">訂閱連結<input id="sub-link" type="url" placeholder="https://"></label>
           <label class="wide" for="remarks">備註<input id="remarks" placeholder="補充資料、續約安排或注意事項"></label>
           <div class="form-actions">
-            <button type="submit" class="primary save-button">儲存授權 <span aria-hidden="true">→</span></button>
+            <button type="submit" class="primary save-button" disabled>儲存授權 <span aria-hidden="true">→</span></button>
             <button id="cancel-edit" type="button" class="secondary hidden">取消編輯</button>
           </div>
         </form>
