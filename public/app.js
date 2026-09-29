@@ -38,6 +38,7 @@ const licenseId = $("license-id");
 const formTitle = $("form-title");
 const cancelEdit = $("cancel-edit");
 const licensesBody = $("licenses-body");
+const licenseMessage = $("license-message");
 const settingsForm = $("settings-form");
 const settingsMessage = $("settings-message");
 
@@ -52,8 +53,9 @@ function showOnly(screen) {
   appScreen.classList.toggle("hidden", screen !== "app");
 }
 
-function setMessage(element, message = "") {
+function setMessage(element, message = "", success = false) {
   element.textContent = message;
+  element.classList.toggle("success", success && Boolean(message));
 }
 
 function isConfigured() {
@@ -109,10 +111,11 @@ function getStatus(item, expiringDays = 30) {
 }
 
 function getFilters() {
+  const rawExpiringDays = Number($("expiring-days").value || 30);
   return {
     search: $("search").value.trim().toLowerCase(),
     status: $("status-filter").value,
-    expiringDays: Math.max(1, Number($("expiring-days").value || 30))
+    expiringDays: Number.isFinite(rawExpiringDays) ? Math.max(1, Math.floor(rawExpiringDays)) : 30
   };
 }
 
@@ -143,7 +146,19 @@ function escapeHtml(value = "") {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function safeHttpUrl(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  try {
+    const url = new URL(text);
+    return ["http:", "https:"].includes(url.protocol) && url.hostname ? url.href : null;
+  } catch {
+    return null;
+  }
 }
 
 function renderStats(visible) {
@@ -175,8 +190,9 @@ function renderLicenses() {
 
   licensesBody.innerHTML = visible.map((item) => {
     const status = getStatus(item, filters.expiringDays);
-    const link = item.subLink
-      ? `<a href="${escapeHtml(item.subLink)}" target="_blank" rel="noreferrer">打開</a>`
+    const linkUrl = safeHttpUrl(item.subLink);
+    const link = linkUrl
+      ? `<a href="${escapeHtml(linkUrl)}" target="_blank" rel="noreferrer">打開</a>`
       : "-";
 
     return `
@@ -210,15 +226,26 @@ function resetLicenseForm() {
 }
 
 function readLicenseForm() {
+  const rawPrice = $("price").value.trim();
+  const price = rawPrice === "" ? 0 : Number(rawPrice);
+  if (!Number.isFinite(price) || price < 0) {
+    throw new Error("價格必須是 0 或以上的有限數字。");
+  }
+
+  const subLink = safeHttpUrl($("sub-link").value);
+  if (subLink === null) {
+    throw new Error("訂閱連結必須是有效的 HTTP 或 HTTPS 網址。");
+  }
+
   return {
     name: $("name").value.trim(),
     seats: $("seats").value.trim(),
     expiry: $("expiry").value,
     paymentMethod: $("payment-method").value.trim(),
-    price: Number($("price").value || 0),
+    price,
     pic: $("pic").value.trim(),
     user: $("user").value.trim(),
-    subLink: $("sub-link").value.trim(),
+    subLink,
     remarks: $("remarks").value.trim(),
     updatedAt: serverTimestamp()
   };
@@ -248,6 +275,11 @@ function csvEscape(value) {
   return text;
 }
 
+function spreadsheetSafeText(value) {
+  const text = String(value ?? "");
+  return /^[=+\-@]/.test(text) ? `'${text}` : text;
+}
+
 function downloadFile(filename, content, type) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
@@ -263,17 +295,17 @@ function exportRows(format) {
   const rows = getFilteredLicenses().map((item) => {
     const status = getStatus(item, filters.expiringDays);
     return [
-      item.name,
-      item.seats,
+      spreadsheetSafeText(item.name),
+      spreadsheetSafeText(item.seats),
       item.expiry,
       status.label,
       status.daysLeft ?? "",
       Number(item.price || 0).toFixed(2),
-      item.paymentMethod,
-      item.pic,
-      item.user,
-      item.subLink,
-      item.remarks
+      spreadsheetSafeText(item.paymentMethod),
+      spreadsheetSafeText(item.pic),
+      spreadsheetSafeText(item.user),
+      spreadsheetSafeText(item.subLink),
+      spreadsheetSafeText(item.remarks)
     ];
   });
   const headers = ["軟件名稱", "席位數/方案", "到期日", "狀態", "剩餘天數", "價格(HK$)", "付款方式", "PIC", "使用者/部門", "訂閱連結", "備註"];
@@ -297,6 +329,9 @@ function startLicenseListener() {
   state.licenseUnsubscribe = onSnapshot(licensesQuery, (snapshot) => {
     state.licenses = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
     renderLicenses();
+    setMessage(licenseMessage);
+  }, (error) => {
+    setMessage(licenseMessage, `同步失敗：${formatFirebaseError(error)}`);
   });
 }
 
@@ -347,15 +382,27 @@ $("logout").addEventListener("click", async () => {
 
 licenseForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const payload = readLicenseForm();
-  if (!payload.name || !payload.seats || !payload.expiry) return;
+  setMessage(licenseMessage);
+  const saveButton = licenseForm.querySelector(".save-button");
+  saveButton.disabled = true;
+  try {
+    const payload = readLicenseForm();
+    if (!payload.name || !payload.seats || !payload.expiry) {
+      throw new Error("軟件名稱、數量／帳戶和到期日期是必填欄位。");
+    }
 
-  if (licenseId.value) {
-    await updateDoc(doc(db, "licenses", licenseId.value), payload);
-  } else {
-    await addDoc(collection(db, "licenses"), { ...payload, createdAt: serverTimestamp() });
+    if (licenseId.value) {
+      await updateDoc(doc(db, "licenses", licenseId.value), payload);
+    } else {
+      await addDoc(collection(db, "licenses"), { ...payload, createdAt: serverTimestamp() });
+    }
+    resetLicenseForm();
+    setMessage(licenseMessage, "授權資料已儲存。", true);
+  } catch (error) {
+    setMessage(licenseMessage, formatFirebaseError(error));
+  } finally {
+    saveButton.disabled = false;
   }
-  resetLicenseForm();
 });
 
 cancelEdit.addEventListener("click", resetLicenseForm);
@@ -365,28 +412,35 @@ licensesBody.addEventListener("click", async (event) => {
   const deleteId = event.target.dataset.delete;
   if (editId) editLicense(editId);
   if (deleteId && confirm("確定要刪除這筆授權資料嗎？")) {
-    await deleteDoc(doc(db, "licenses", deleteId));
+    try {
+      await deleteDoc(doc(db, "licenses", deleteId));
+      setMessage(licenseMessage, "授權資料已刪除。", true);
+    } catch (error) {
+      setMessage(licenseMessage, formatFirebaseError(error));
+    }
   }
 });
 
 settingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setMessage(settingsMessage);
-  settingsMessage.classList.remove("success");
   const newPassword = $("new-password").value;
   const confirmPassword = $("confirm-password").value;
   if (newPassword !== confirmPassword) {
     setMessage(settingsMessage, "兩次輸入的新密碼不一致。");
     return;
   }
-  const passwordHash = await sha256(newPassword);
-  await setDoc(doc(db, "settings", "access"), {
-    passwordHash,
-    updatedAt: serverTimestamp()
-  }, { merge: true });
-  settingsForm.reset();
-  settingsMessage.classList.add("success");
-  setMessage(settingsMessage, "密碼已更新。固定後備密碼仍可登入。");
+  try {
+    const passwordHash = await sha256(newPassword);
+    await setDoc(doc(db, "settings", "access"), {
+      passwordHash,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    settingsForm.reset();
+    setMessage(settingsMessage, "密碼已更新。固定後備密碼仍可登入。", true);
+  } catch (error) {
+    setMessage(settingsMessage, formatFirebaseError(error));
+  }
 });
 
 ["search", "status-filter", "expiring-days"].forEach((id) => {
