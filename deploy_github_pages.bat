@@ -34,8 +34,9 @@ call npx --yes firebase-tools deploy --only firestore:rules --project jo-license
 
 echo.
 echo Pushing branch codex/firebase-web...
+gh auth setup-git || goto :auth_error
 set "GIT_TERMINAL_PROMPT=0"
-git -c credential.helper="!gh auth git-credential" push -u origin codex/firebase-web || goto :push_error
+git push -u origin codex/firebase-web || goto :push_error
 
 echo.
 echo GitHub Actions will deploy the pushed commit once:
