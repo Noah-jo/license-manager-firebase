@@ -7,8 +7,6 @@ import {
   getDoc,
   getFirestore,
   onSnapshot,
-  orderBy,
-  query,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -203,6 +201,15 @@ function sortVisibleLicenses(licenses) {
     return comparison === 0
       ? String(left.name || "").localeCompare(String(right.name || ""), "zh-Hant")
       : comparison * direction;
+  });
+}
+
+function sortLicensesByExpiry(licenses) {
+  return [...licenses].sort((left, right) => {
+    const leftExpiry = String(left.expiry || "9999-12-31");
+    const rightExpiry = String(right.expiry || "9999-12-31");
+    const expiryOrder = leftExpiry.localeCompare(rightExpiry);
+    return expiryOrder || String(left.name || "").localeCompare(String(right.name || ""), "zh-Hant");
   });
 }
 
@@ -548,9 +555,8 @@ function startLicenseListener() {
   state.licenseLoaded = false;
   renderLicenses();
   setConnectionState("checking", "正在同步", "正在檢查 Firebase 同步狀態");
-  const licensesQuery = query(collection(db, "licenses"), orderBy("expiry", "asc"));
-  state.licenseUnsubscribe = onSnapshot(licensesQuery, (snapshot) => {
-    state.licenses = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+  state.licenseUnsubscribe = onSnapshot(collection(db, "licenses"), (snapshot) => {
+    state.licenses = sortLicensesByExpiry(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
     state.licenseLoaded = true;
     setConnectionState("connected", "已同步", `已同步 ${state.licenses.length} 筆授權資料`);
     renderLicenses();

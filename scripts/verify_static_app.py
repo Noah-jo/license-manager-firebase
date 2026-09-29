@@ -29,6 +29,7 @@ required_js = {
     "isValidDateText": "calendar date validation",
     "licenseRecordKey": "duplicate import protection",
     "sortLicenses": "table sorting flow",
+    "sortLicensesByExpiry": "complete license snapshot sorting",
     'sessionStorage.getItem("licenseManagerUnlocked")': "session restore flow",
     "hasDuplicateLicense": "manual duplicate protection",
     "正在同步授權資料": "initial sync loading state",
