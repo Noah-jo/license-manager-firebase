@@ -46,15 +46,13 @@ The online version uses the shared-password gate. The Firestore rules intentiona
 
 ## Local-first release flow
 
-Run the local tests and build from the repository root before pushing the online version:
+The recommended deployment script now runs the local tests and EXE build first, deploys the current Firestore rules, then pushes the existing commit. The push automatically triggers GitHub Pages once:
 
 ```powershell
-python -m unittest discover -s tests -v
-python -m py_compile app.py tests\test_app.py
-.\build_exe.bat
+.\deploy_github_pages.bat
 ```
 
-Only after those checks pass should changes under `firebase-web/` be committed and pushed. GitHub Actions then publishes `public/` to GitHub Pages.
+If the local checks or Firebase rules deployment fails, the script stops before pushing. Commit changes under `firebase-web/` before running it; it never creates a commit for you.
 
 ## GitHub
 
@@ -68,7 +66,7 @@ git push origin codex/firebase-web
 
 The included GitHub Actions workflow publishes `public/` to GitHub Pages when `codex/firebase-web` is pushed.
 
-## Import old SQLite data
+## Import and restore JSON data
 
 Run the export script from this folder:
 
@@ -76,6 +74,8 @@ Run the export script from this folder:
 python scripts/export_sqlite_to_json.py
 ```
 
-It creates `licenses-export.json`. Importing that JSON to Firestore can be automated later with an Admin SDK script after Firebase credentials are available.
+It creates `licenses-export.json`.
 
-The current web UI can import this JSON directly after entering the shared password. Import is additive: it creates new records and never deletes existing Firestore documents.
+- In the local version, use `選擇 JSON` and `匯入 JSON` to restore records into SQLite.
+- In the online version, enter the shared password and use `匯入 JSON` to add records to Firestore.
+- Both imports are additive and never delete existing records.

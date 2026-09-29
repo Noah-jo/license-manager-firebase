@@ -21,5 +21,6 @@ The online version intentionally keeps the simple shared-password workflow reque
 
 ## Backup flow
 
-- Local version: use `備份 JSON` to export portable data.
+- Local version: use `備份 JSON` to export, or `選擇 JSON` + `匯入 JSON` to restore records into SQLite.
 - Online version: use `匯入 JSON` to add those records to Firestore without deleting existing records.
+- Both import flows validate required fields, dates, prices, and subscription URLs before writing.

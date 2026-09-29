@@ -1,41 +1,48 @@
 @echo off
 setlocal
 
-cd /d "%~dp0"
+set "REPO_DIR=%~dp0"
+set "ROOT_DIR=%~dp0.."
+set "PYTHON_EXE=C:\Users\Jo\AppData\Local\Microsoft\WindowsApps\python.exe"
+
+cd /d "%ROOT_DIR%"
+
+echo Running local tests...
+"%PYTHON_EXE%" -m unittest discover -s tests -v || goto :local_error
+"%PYTHON_EXE%" -m py_compile app.py tests\test_app.py || goto :local_error
+call "%ROOT_DIR%\build_exe.bat" || goto :local_error
+
+cd /d "%REPO_DIR%"
 
 echo Checking GitHub CLI login...
 gh auth status || goto :auth_error
 
 echo.
 echo Checking repository...
-gh repo view Noah-jo/license-manager-firebase >nul 2>nul
-if errorlevel 1 (
-  echo Creating GitHub repository Noah-jo/license-manager-firebase...
-  gh repo create Noah-jo/license-manager-firebase --public --source . --remote origin
-) else (
-  echo Repository already exists.
-  git remote remove origin >nul 2>nul
-  git remote add origin https://github.com/Noah-jo/license-manager-firebase.git
-)
+git remote get-url origin >nul 2>nul || git remote add origin https://github.com/Noah-jo/license-manager-firebase.git
+
+echo.
+echo Deploying Firebase Firestore rules...
+npx --yes firebase-tools deploy --only firestore:rules --project jo-license-manager-20260710 --non-interactive || goto :firebase_error
 
 echo.
 echo Pushing branch codex/firebase-web...
 git push -u origin codex/firebase-web || goto :push_error
 
 echo.
-echo Triggering GitHub Pages workflow...
-gh workflow run "Deploy to GitHub Pages" --repo Noah-jo/license-manager-firebase --ref codex/firebase-web
-
-echo.
-echo Waiting for workflow to start...
-timeout /t 8 /nobreak >nul
-gh run list --repo Noah-jo/license-manager-firebase --workflow "Deploy to GitHub Pages" --limit 5
-
-echo.
-echo GitHub Pages URL should be:
+echo GitHub Actions will deploy the pushed commit once:
 echo https://noah-jo.github.io/license-manager-firebase/
 echo.
-echo If the workflow is still running, wait 1-2 minutes and refresh the URL.
+goto :done
+
+:local_error
+echo.
+echo Local verification failed. Nothing was pushed.
+goto :done
+
+:firebase_error
+echo.
+echo Firebase rules deployment failed. Nothing was pushed.
 goto :done
 
 :auth_error
@@ -50,6 +57,4 @@ echo Push failed. Check the error above.
 goto :done
 
 :done
-echo.
-pause
 endlocal
