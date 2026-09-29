@@ -29,6 +29,7 @@ body::before {
 button, input, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { border: 0; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 3px solid rgba(242,107,56,.38); outline-offset: 3px; }
 input, select {
   width: 100%; min-height: 46px; border: 1px solid #cbc8be; border-radius: 3px; background: #fff;
   color: var(--ink); margin-top: 7px; padding: 11px 13px; outline: none; transition: border-color .2s, box-shadow .2s, transform .2s;
