@@ -11,6 +11,7 @@ echo Running local tests...
 "%PYTHON_EXE%" -m unittest discover -s tests -v || goto :local_error
 "%PYTHON_EXE%" -m py_compile app.py tests\test_app.py || goto :local_error
 "%PYTHON_EXE%" "%REPO_DIR%scripts\verify_static_app.py" || goto :local_error
+node --check "%REPO_DIR%public\app.js" || goto :local_error
 call "%ROOT_DIR%\build_exe.bat" || goto :local_error
 
 cd /d "%REPO_DIR%"

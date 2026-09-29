@@ -43,6 +43,7 @@ required_js = {
     "setSyncAvailability": "write safety while Firebase sync is pending",
     "snapshot.metadata.fromCache": "cache-only sync safety",
     "empty-action": "empty-state add action",
+    "data-empty-clear": "empty-state filter reset action",
     "pendingImportCount": "deferred JSON import readiness",
     "新密碼至少需要 6 個字元": "password length validation",
     "unknownDateCount": "legacy backup date warning",

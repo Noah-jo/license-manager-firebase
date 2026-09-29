@@ -324,7 +324,7 @@ function renderLicenses() {
   if (!visible.length) {
     const hasRecords = state.licenses.length > 0;
     const emptyHint = hasRecords
-      ? "請清除搜尋或調整篩選條件。"
+      ? `請清除搜尋或調整篩選條件。<a class="empty-action" href="#license-list" data-empty-clear>清除篩選</a>`
       : `<a class="empty-action" href="#add-license">新增第一項授權</a>，或匯入 JSON 備份。`;
     licensesBody.innerHTML = `
       <tr><td colspan="11" class="empty-row">
@@ -741,6 +741,13 @@ licenseForm.addEventListener("submit", async (event) => {
 cancelEdit.addEventListener("click", resetLicenseForm);
 
 licensesBody.addEventListener("click", async (event) => {
+  if (event.target.dataset.emptyClear !== undefined) {
+    $("search").value = "";
+    $("status-filter").value = "all";
+    $("expiring-days").value = "30";
+    renderLicenses();
+    return;
+  }
   const editId = event.target.dataset.edit;
   const deleteId = event.target.dataset.delete;
   if (editId) editLicense(editId);
