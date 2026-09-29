@@ -39,13 +39,17 @@
         <p class="muted auth-copy">輸入共用密碼，查看及管理所有軟件授權。</p>
 
         <form id="auth-form" class="stack">
-          <p class="auth-login-label">管理員帳戶</p>
+          <label for="gate-password">存取密碼</label>
+          <div class="input-with-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5z"/></svg>
+            <input id="gate-password" type="password" autocomplete="current-password" placeholder="請輸入密碼" required autofocus>
+          </div>
           <button id="auth-submit" type="submit" class="primary large">
-            <span>使用 Google 帳戶登入</span><span aria-hidden="true">→</span>
+            <span>進入系統</span><span aria-hidden="true">→</span>
           </button>
         </form>
         <p id="auth-message" class="message" role="alert"></p>
-        <p class="auth-note"><span></span> 只有已授權的管理員帳戶可以存取資料</p>
+        <p class="auth-note"><span></span> 資料已透過 Firebase 雲端同步</p>
       </div>
     </section>
   </main>
@@ -177,12 +181,12 @@
           <span class="summary-action">展開設定 <b>+</b></span>
         </summary>
         <div class="settings-content">
-          <div class="settings-note"><strong>帳戶安全</strong><p>線上版使用 Google 帳戶驗證。Firestore 只接受已授權的管理員 email，登出後會立即停止資料同步。</p></div>
-          <div class="settings-account">
-            <span class="eyebrow">目前帳戶</span>
-            <strong id="settings-account-email">尚未登入</strong>
-            <button id="settings-logout" type="button" class="secondary">安全登出</button>
-          </div>
+          <div class="settings-note"><strong>登入密碼</strong><p>更改後，其他已登入的裝置仍可使用至登出為止。永久備用密碼不會受影響。</p></div>
+          <form id="settings-form" class="settings-form">
+            <label for="new-password">新密碼<input id="new-password" type="password" minlength="6" placeholder="最少 6 個字元" required></label>
+            <label for="confirm-password">確認新密碼<input id="confirm-password" type="password" minlength="6" placeholder="再次輸入新密碼" required></label>
+            <div class="form-actions"><button type="submit" class="primary">更新密碼</button></div>
+          </form>
           <p id="settings-message" class="message" role="status"></p>
         </div>
       </details>

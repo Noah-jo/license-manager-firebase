@@ -2,18 +2,12 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAuthorizedAdmin() {
-      return request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.token.email == '20190911noah@gmail.com';
-    }
-
     match /settings/{docId} {
-      allow read, write: if isAuthorizedAdmin();
+      allow read, write: if true;
     }
 
     match /licenses/{licenseId} {
-      allow read, create, update, delete: if isAuthorizedAdmin();
+      allow read, create, update, delete: if true;
     }
   }
 }

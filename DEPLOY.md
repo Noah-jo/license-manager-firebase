@@ -21,7 +21,6 @@ jo-license-manager-20260710
 Enable these Firebase products:
 
 - Firestore Database
-- Authentication → Google provider
 - GitHub Pages for hosting
 
 The Firebase Web App config has already been written to:
@@ -30,7 +29,7 @@ The Firebase Web App config has already been written to:
 public/firebase-config.js
 ```
 
-Add `noah-jo.github.io` to Authentication → Settings → Authorized domains before testing Google sign-in. Confirm that `allowedAdminEmail` in `public/firebase-config.js` matches the administrator Google account.
+Firebase Authentication is not required for this version. The web app keeps the shared-password flow, with the initial password `36961500`.
 
 ## Deploy
 
@@ -43,22 +42,28 @@ firebase deploy --only firestore
 
 ## Access control
 
-The online version no longer uses a frontend-only shared password. Sign in with the authorized Google account. Firestore rules reject every other account and all unauthenticated requests.
+The online version uses the shared-password gate. The Firestore rules intentionally remain open so the static GitHub Pages app can read and write after the browser-side gate. This is suitable for operational convenience, not sensitive data protection.
+
+## Local-first release flow
+
+Run the local tests and build from the repository root before pushing the online version:
+
+```powershell
+python -m unittest discover -s tests -v
+python -m py_compile app.py tests\test_app.py
+.\build_exe.bat
+```
+
+Only after those checks pass should changes under `firebase-web/` be committed and pushed. GitHub Actions then publishes `public/` to GitHub Pages.
 
 ## GitHub
 
-The GitHub CLI token on this machine is currently invalid. Re-authenticate first:
-
-```powershell
-gh auth login -h github.com
-```
-
-Then create and push a repository from `firebase-web/`:
+Push the verified online changes from `firebase-web/`:
 
 ```powershell
 git add .
-git commit -m "Build Firebase web license manager"
-gh repo create license-manager-firebase --private --source . --remote origin --push
+git commit -m "Update Firebase web license manager"
+git push origin codex/firebase-web
 ```
 
 The included GitHub Actions workflow publishes `public/` to GitHub Pages when `codex/firebase-web` is pushed.
@@ -73,4 +78,4 @@ python scripts/export_sqlite_to_json.py
 
 It creates `licenses-export.json`. Importing that JSON to Firestore can be automated later with an Admin SDK script after Firebase credentials are available.
 
-The current web UI can import this JSON directly after Google sign-in. Import is additive: it creates new records and never deletes existing Firestore documents.
+The current web UI can import this JSON directly after entering the shared password. Import is additive: it creates new records and never deletes existing Firestore documents.

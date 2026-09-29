@@ -6,15 +6,20 @@ This is the cloud web version of the local Flask/SQLite License Manager.
 
 - Firebase Hosting for the static web app
 - Cloud Firestore for license data and settings
-- Google account sign-in before the app UI opens
+- Shared-password gate before the app UI opens
+- JSON backup import for moving data from the local version
 
 ## Access control
 
-- The authorized administrator email is configured in `public/firebase-config.js`.
-- Firebase Authentication must have the Google provider enabled.
-- The GitHub Pages domain must be added to Firebase Authentication's authorized domains.
-- Firestore rules only allow the verified authorized email to read or write data.
+- The initial shared password is `36961500`.
+- The password can be changed from the online app's settings panel.
+- A fixed fallback password remains available for recovery if a custom password is forgotten.
 
 ## Security note
 
-The static site uses Firebase Authentication for identity and Firestore rules for the actual data boundary. The email address in the frontend is not a secret; the enforcement happens in Firestore rules.
+The online version intentionally keeps the simple shared-password workflow requested for this tool. Because GitHub Pages is a static site, this is a convenience gate rather than server-side identity security; Firestore rules currently allow the app's signed-out browser to read and write data. Do not reuse the shared password for sensitive systems.
+
+## Backup flow
+
+- Local version: use `備份 JSON` to export portable data.
+- Online version: use `匯入 JSON` to add those records to Firestore without deleting existing records.
