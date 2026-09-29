@@ -10,6 +10,7 @@ This is the cloud web version of the local Flask/SQLite License Manager.
 - JSON backup import for moving data from the local version
 - Sortable license table with one-click filter reset
 - Duplicate-safe JSON import: exact records are skipped and reported
+- Two-step JSON import preview: review new and duplicate counts before writing
 
 ## Access control
 
@@ -23,6 +24,6 @@ The online version intentionally keeps the simple shared-password workflow reque
 
 ## Backup flow
 
-- Local version: use `備份 JSON` to export, or `選擇 JSON` + `匯入 JSON` to restore records into SQLite.
-- Online version: use `備份 JSON` to export Firestore records, or `匯入 JSON` to add records without deleting existing records.
+- Local version: use `備份 JSON` to export, then `選擇 JSON` to preview the differences before importing into SQLite.
+- Online version: use `備份 JSON` to export Firestore records, then choose a JSON file and press `開始匯入` after reviewing the difference summary.
 - Both import flows validate required fields, dates, prices, and subscription URLs before writing.

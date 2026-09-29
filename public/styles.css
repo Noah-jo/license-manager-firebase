@@ -52,6 +52,8 @@ a { color: inherit; }
 .secondary { background: #edf0f2; border: 1px solid #d6dce1; color: var(--ink); }
 .secondary:hover { background: #dfe5e9; transform: translateY(-1px); }
 .import-button { cursor: pointer; }
+.import-summary { align-self: center; color: var(--muted); font-size: 11px; max-width: 280px; }
+.import-summary.error { color: var(--red); }
 .sort-button { align-items: center; background: transparent; color: inherit; display: inline-flex; font: inherit; gap: 6px; justify-content: flex-start; letter-spacing: inherit; padding: 0; text-align: left; text-transform: inherit; }
 .sort-button:hover { color: var(--orange-dark); }
 .sort-indicator { color: var(--orange); font-size: 13px; line-height: 1; }
@@ -192,7 +194,7 @@ tbody tr.expiring { background: #fff9ee; box-shadow: inset 3px 0 #eca43c; }
 @media (max-width: 620px) {
 .topbar { min-height: 68px; padding: 10px 15px; }.app-brand small, .user-box #current-user { display: none; }.brand-mark { height: 38px; width: 38px; }.dashboard { padding: 26px 13px; }
   .page-heading { align-items: flex-start; flex-direction: column; gap: 20px; }.today-card { min-width: 0; }.stats-grid { gap: 9px; grid-template-columns: repeat(2,1fr); }.stat-card { align-items: flex-start; flex-direction: column; min-height: 150px; padding: 16px; }.stat-icon { height: 36px; width: 36px; }
-  .toolbar { grid-template-columns: 1fr; padding: 17px; }.toolbar-title { grid-column: auto; }.toolbar-actions { display: grid; grid-template-columns: 1fr 1fr; }.panel-heading { align-items: flex-start; gap: 12px; padding: 16px; }.panel-tag { display: none; }
+  .toolbar { grid-template-columns: 1fr; padding: 17px; }.toolbar-title { grid-column: auto; }.toolbar-actions { display: grid; grid-template-columns: 1fr 1fr; }.import-summary { grid-column: 1 / -1; max-width: none; }.panel-heading { align-items: flex-start; gap: 12px; padding: 16px; }.panel-tag { display: none; }
   .license-form { grid-template-columns: 1fr; padding: 18px 16px; }.license-form .wide { grid-column: auto; }.license-form .form-actions { flex-direction: column; padding-top: 4px; }.license-form .form-actions button { width: 100%; }
   .list-heading { align-items: center; }.list-heading .heading-group p { display: none; }.settings-content { padding: 20px 16px; }.settings-form { grid-template-columns: 1fr; }.settings-form .form-actions { grid-column: auto; }.settings-form button { width: 100%; }
   .summary-action { font-size: 0; }.summary-action b { font-size: 22px; }.app-footer { flex-direction: column; gap: 6px; }

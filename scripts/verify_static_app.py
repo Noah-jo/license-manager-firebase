@@ -17,6 +17,7 @@ required_html = {
     'id="connection-dot"': "connection status indicator",
     'id="clear-filters"': "clear filters button",
     'data-sort-key="expiry"': "sortable license table",
+    'id="import-json-submit"': "JSON import submit button",
 }
 required_js = {
     "unlockWithPassword": "shared password flow",
@@ -28,6 +29,7 @@ required_js = {
     'sessionStorage.getItem("licenseManagerUnlocked")': "session restore flow",
     "hasDuplicateLicense": "manual duplicate protection",
     "正在同步授權資料": "initial sync loading state",
+    "previewJsonBackup": "JSON import preview flow",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",

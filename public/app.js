@@ -46,7 +46,11 @@ const settingsForm = $("settings-form");
 const settingsMessage = $("settings-message");
 const connectionDot = $("connection-dot");
 const currentUser = $("current-user");
+const jsonImportSummary = $("json-import-summary");
+const importJsonSubmit = $("import-json-submit");
 const sortState = { key: "expiry", direction: "asc" };
+let pendingJsonFile = null;
+let importRequestId = 0;
 
 $("today-date").textContent = new Intl.DateTimeFormat("zh-HK", {
   year: "numeric",
@@ -405,8 +409,7 @@ function normalizeImportedLicense(item, index) {
   };
 }
 
-async function importJsonBackup(file) {
-  const parsed = JSON.parse(await file.text());
+function getImportedRecords(parsed) {
   const records = Array.isArray(parsed) ? parsed : parsed?.licenses;
   if (!Array.isArray(records) || !records.length) {
     throw new Error("JSON 備份內沒有可匯入的授權資料。");
@@ -424,13 +427,26 @@ async function importJsonBackup(file) {
     existingKeys.add(key);
     unique.push(record);
   });
+  return { total: normalized.length, unique, skipped };
+}
+
+async function previewJsonBackup(file) {
+  const parsed = JSON.parse(await file.text());
+  return getImportedRecords(parsed);
+}
+
+async function importJsonBackup(file) {
+  const parsed = JSON.parse(await file.text());
+  const { total, unique, skipped } = getImportedRecords(parsed);
 
   if (!unique.length) {
     setMessage(licenseMessage, `沒有新增資料，跳過 ${skipped} 筆完全相同的授權。`, true);
-    return;
+    return { total, imported: 0, skipped };
   }
   const skippedText = skipped ? `，另跳過 ${skipped} 筆完全相同資料` : "";
-  if (!confirm(`即將新增 ${unique.length} 筆授權資料${skippedText}。現有資料不會被刪除，確定繼續嗎？`)) return;
+  if (!confirm(`即將新增 ${unique.length} 筆授權資料${skippedText}。現有資料不會被刪除，確定繼續嗎？`)) {
+    return { total, imported: 0, skipped, cancelled: true };
+  }
 
   for (let offset = 0; offset < unique.length; offset += 400) {
     const batch = writeBatch(db);
@@ -440,6 +456,12 @@ async function importJsonBackup(file) {
     await batch.commit();
   }
   setMessage(licenseMessage, `已匯入 ${unique.length} 筆授權資料${skippedText}。`, true);
+  return { total, imported: unique.length, skipped };
+}
+
+function setImportSummary(message, error = false) {
+  jsonImportSummary.textContent = message;
+  jsonImportSummary.classList.toggle("error", error);
 }
 
 function downloadFile(filename, content, type) {
@@ -671,14 +693,42 @@ $("export-excel").addEventListener("click", () => exportRows("excel"));
 $("export-json").addEventListener("click", exportJsonBackup);
 jsonImport.addEventListener("change", async (event) => {
   const [file] = event.target.files;
-  if (!file) return;
+  const requestId = ++importRequestId;
+  pendingJsonFile = null;
+  importJsonSubmit.disabled = true;
+  setMessage(licenseMessage);
+  if (!file) {
+    setImportSummary("選擇檔案以先檢查差異");
+    return;
+  }
+
+  setImportSummary("正在檢查檔案…");
+  try {
+    const result = await previewJsonBackup(file);
+    if (requestId !== importRequestId) return;
+    pendingJsonFile = file;
+    const skippedText = result.skipped ? `，跳過 ${result.skipped} 筆重複` : "";
+    setImportSummary(`共 ${result.total} 筆：可新增 ${result.unique.length} 筆${skippedText}`);
+    importJsonSubmit.disabled = result.unique.length === 0;
+  } catch (error) {
+    if (requestId !== importRequestId) return;
+    setImportSummary(`檢查失敗：${formatFirebaseError(error)}`, true);
+  }
+});
+importJsonSubmit.addEventListener("click", async () => {
+  if (!pendingJsonFile) return;
+  const file = pendingJsonFile;
+  importJsonSubmit.disabled = true;
   setMessage(licenseMessage);
   try {
-    await importJsonBackup(file);
+    const result = await importJsonBackup(file);
+    setImportSummary(result?.cancelled ? "已取消匯入；可重新選擇檔案" : "匯入完成；可再選擇其他 JSON 檔案");
   } catch (error) {
     setMessage(licenseMessage, formatFirebaseError(error));
+    setImportSummary(`匯入失敗：${formatFirebaseError(error)}`, true);
   } finally {
-    event.target.value = "";
+    pendingJsonFile = null;
+    jsonImport.value = "";
   }
 });
 

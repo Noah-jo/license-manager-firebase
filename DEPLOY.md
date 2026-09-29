@@ -76,6 +76,6 @@ python scripts/export_sqlite_to_json.py
 
 It creates `licenses-export.json`.
 
-- In the local version, use `選擇 JSON` and `匯入 JSON` to restore records into SQLite.
-- In the online version, enter the shared password, use `備份 JSON` to export Firestore records, or use `匯入 JSON` to add records.
+- In the local version, use `選擇 JSON`, review the read-only difference preview, then press `匯入 JSON` to restore records into SQLite.
+- In the online version, enter the shared password, use `備份 JSON` to export Firestore records, then review the new/duplicate counts before pressing `開始匯入`.
 - Both imports are additive and never delete existing records.
