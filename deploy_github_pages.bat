@@ -10,7 +10,7 @@ cd /d "%ROOT_DIR%"
 echo Running local tests...
 "%PYTHON_EXE%" -m unittest discover -s tests -v || goto :local_error
 "%PYTHON_EXE%" -m py_compile app.py tests\test_app.py || goto :local_error
-"%PYTHON_EXE%" scripts\verify_static_app.py || goto :local_error
+"%PYTHON_EXE%" "%REPO_DIR%scripts\verify_static_app.py" || goto :local_error
 call "%ROOT_DIR%\build_exe.bat" || goto :local_error
 
 cd /d "%REPO_DIR%"
@@ -39,38 +39,38 @@ echo.
 echo GitHub Actions will deploy the pushed commit once:
 echo https://noah-jo.github.io/license-manager-firebase/
 echo.
-goto :done
+goto :finish
 
 :local_error
 echo.
 echo Local verification failed. Nothing was pushed.
-goto :done
+goto :finish
 
 :firebase_error
 echo.
 echo Firebase rules deployment failed. Nothing was pushed.
-goto :done
+goto :finish
 
 :auth_error
 echo.
 echo GitHub CLI is not logged in in this terminal.
 echo Run: gh auth login -h github.com --web --git-protocol https
-goto :done
+goto :finish
 
 :branch_error
 echo.
 echo This script only deploys the codex/firebase-web branch.
-goto :done
+goto :finish
 
 :dirty_error
 echo.
 echo Working tree is not clean. Commit or discard changes before deploying.
-goto :done
+goto :finish
 
 :push_error
 echo.
 echo Push failed. Check the error above.
-goto :done
+goto :finish
 
-:done
+:finish
 endlocal
