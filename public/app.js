@@ -23,7 +23,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const state = {
-  unlocked: false,
+  unlocked: sessionStorage.getItem("licenseManagerUnlocked") === "true",
   licenses: [],
   licenseUnsubscribe: null
 };

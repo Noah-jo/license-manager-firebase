@@ -25,6 +25,7 @@ required_js = {
     "safeHttpUrl": "safe link validation",
     "licenseRecordKey": "duplicate import protection",
     "sortLicenses": "table sorting flow",
+    'sessionStorage.getItem("licenseManagerUnlocked")': "session restore flow",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",
