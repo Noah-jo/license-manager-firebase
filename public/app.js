@@ -50,7 +50,8 @@ const currentUser = $("current-user");
 const jsonImportSummary = $("json-import-summary");
 const importJsonSubmit = $("import-json-submit");
 const saveLicenseButton = licenseForm.querySelector(".save-button");
-const syncBoundControls = [$("export-csv"), $("export-excel"), $("export-json"), jsonImport];
+const settingsSaveButton = settingsForm.querySelector("button[type=\"submit\"]");
+const syncBoundControls = [$("export-csv"), $("export-excel"), $("export-json"), jsonImport, settingsSaveButton];
 const jsonImportLabel = $("json-import-label");
 const sortState = { key: "expiry", direction: "asc" };
 let pendingJsonFile = null;
@@ -336,6 +337,7 @@ function renderLicenses() {
   licensesBody.innerHTML = visible.map((item) => {
     const status = getStatus(item, filters.expiringDays);
     const itemName = escapeHtml(item.name || "授權資料");
+    const deleteDisabled = syncReady ? "" : " disabled";
     const linkUrl = safeHttpUrl(item.subLink);
     const link = linkUrl
       ? `<a href="${escapeHtml(linkUrl)}" target="_blank" rel="noreferrer" aria-label="打開 ${itemName} 的訂閱連結">打開</a>`
@@ -356,7 +358,7 @@ function renderLicenses() {
         <td>
           <div class="row-actions">
             <button type="button" class="secondary" data-edit="${item.id}" aria-label="編輯 ${itemName}">編輯</button>
-            <button type="button" class="danger" data-delete="${item.id}" aria-label="刪除 ${itemName}">刪除</button>
+            <button type="button" class="danger" data-delete="${item.id}" aria-label="刪除 ${itemName}"${deleteDisabled}>刪除</button>
           </div>
         </td>
       </tr>
@@ -742,7 +744,12 @@ licensesBody.addEventListener("click", async (event) => {
   const editId = event.target.dataset.edit;
   const deleteId = event.target.dataset.delete;
   if (editId) editLicense(editId);
-  if (deleteId && confirm("確定要刪除這筆授權資料嗎？")) {
+  if (deleteId) {
+    if (!syncReady) {
+      setMessage(licenseMessage, "正在同步授權資料，請稍候再刪除。");
+      return;
+    }
+    if (!confirm("確定要刪除這筆授權資料嗎？")) return;
     try {
       await deleteDoc(doc(db, "licenses", deleteId));
       setMessage(licenseMessage, "授權資料已刪除。", true);

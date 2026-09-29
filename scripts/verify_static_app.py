@@ -49,6 +49,9 @@ required_js = {
     "isValidDateText(item.expiry)": "unknown expiry sort placement",
     "expiryRequiredMark": "legacy edit expiry hint",
     "allowBlankExpiry": "legacy edit compatibility",
+    "settingsSaveButton": "sync-gated password settings",
+    "deleteDisabled": "sync-gated delete control",
+    "正在同步授權資料，請稍候再刪除": "delete write safety",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",
