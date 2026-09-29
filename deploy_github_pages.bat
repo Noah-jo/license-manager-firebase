@@ -14,6 +14,11 @@ call "%ROOT_DIR%\build_exe.bat" || goto :local_error
 
 cd /d "%REPO_DIR%"
 
+for /f "delims=" %%B in ('git branch --show-current') do set "CURRENT_BRANCH=%%B"
+if not "%CURRENT_BRANCH%"=="codex/firebase-web" goto :branch_error
+git diff --quiet || goto :dirty_error
+git diff --cached --quiet || goto :dirty_error
+
 echo Checking GitHub CLI login...
 gh auth status || goto :auth_error
 
@@ -49,6 +54,16 @@ goto :done
 echo.
 echo GitHub CLI is not logged in in this terminal.
 echo Run: gh auth login -h github.com --web --git-protocol https
+goto :done
+
+:branch_error
+echo.
+echo This script only deploys the codex/firebase-web branch.
+goto :done
+
+:dirty_error
+echo.
+echo Working tree is not clean. Commit or discard changes before deploying.
 goto :done
 
 :push_error
