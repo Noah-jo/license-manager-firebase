@@ -29,7 +29,7 @@ git remote get-url origin >nul 2>nul || git remote add origin https://github.com
 
 echo.
 echo Deploying Firebase Firestore rules...
-npx --yes firebase-tools deploy --only firestore:rules --project jo-license-manager-20260710 --non-interactive || goto :firebase_error
+call npx --yes firebase-tools deploy --only firestore:rules --project jo-license-manager-20260710 --non-interactive || goto :firebase_error
 
 echo.
 echo Pushing branch codex/firebase-web...
