@@ -43,6 +43,8 @@ const licenseMessage = $("license-message");
 const jsonImport = $("json-import");
 const settingsForm = $("settings-form");
 const settingsMessage = $("settings-message");
+const connectionDot = $("connection-dot");
+const currentUser = $("current-user");
 
 $("today-date").textContent = new Intl.DateTimeFormat("zh-HK", {
   year: "numeric",
@@ -58,6 +60,12 @@ function showOnly(screen) {
 function setMessage(element, message = "", success = false) {
   element.textContent = message;
   element.classList.toggle("success", success && Boolean(message));
+}
+
+function setConnectionState(state, label, title = label) {
+  connectionDot.dataset.state = state;
+  connectionDot.title = title;
+  currentUser.textContent = label;
 }
 
 function isConfigured() {
@@ -403,12 +411,15 @@ function exportJsonBackup() {
 
 function startLicenseListener() {
   state.licenseUnsubscribe?.();
+  setConnectionState("checking", "正在同步", "正在檢查 Firebase 同步狀態");
   const licensesQuery = query(collection(db, "licenses"), orderBy("expiry", "asc"));
   state.licenseUnsubscribe = onSnapshot(licensesQuery, (snapshot) => {
     state.licenses = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+    setConnectionState("connected", "已同步", `已同步 ${state.licenses.length} 筆授權資料`);
     renderLicenses();
     setMessage(licenseMessage);
   }, (error) => {
+    setConnectionState("error", "同步失敗", "Firebase 同步失敗");
     setMessage(licenseMessage, `同步失敗：${formatFirebaseError(error)}`);
   });
 }
@@ -456,7 +467,15 @@ $("logout").addEventListener("click", () => {
   sessionStorage.removeItem("licenseManagerUnlocked");
   state.licenseUnsubscribe?.();
   state.licenseUnsubscribe = null;
+  setConnectionState("checking", "已鎖定", "已登出");
   showOnly("auth");
+});
+
+window.addEventListener("offline", () => {
+  if (state.unlocked) setConnectionState("offline", "離線", "瀏覽器目前沒有網絡連線");
+});
+window.addEventListener("online", () => {
+  if (state.unlocked) startLicenseListener();
 });
 
 licenseForm.addEventListener("submit", async (event) => {

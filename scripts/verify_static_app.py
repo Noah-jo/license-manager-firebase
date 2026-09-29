@@ -14,6 +14,7 @@ required_html = {
     'id="export-json"': "JSON backup button",
     'id="json-import"': "JSON import field",
     'id="settings-form"': "password settings form",
+    'id="connection-dot"': "connection status indicator",
 }
 required_js = {
     "unlockWithPassword": "shared password flow",

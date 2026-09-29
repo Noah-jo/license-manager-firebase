@@ -92,6 +92,8 @@ button:disabled { cursor: wait; opacity: .68; transform: none !important; }
 .input-with-icon input { padding-left: 43px; }
 .auth-note { align-items: center; color: #89939d; display: flex; font-size: 11px; gap: 8px; margin: 28px 0 0; }
 .auth-note span, .connection-dot { background: #2eb67d; border-radius: 50%; box-shadow: 0 0 0 4px rgba(46,182,125,.13); height: 7px; width: 7px; }
+.connection-dot[data-state="checking"] { background: var(--amber); box-shadow: 0 0 0 4px rgba(243,163,51,.14); }
+.connection-dot[data-state="error"], .connection-dot[data-state="offline"] { background: var(--red); box-shadow: 0 0 0 4px rgba(226,74,66,.14); }
 .mobile-brand { display: none; }
 
 /* App */
