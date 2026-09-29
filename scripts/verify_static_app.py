@@ -26,6 +26,7 @@ required_js = {
     "exportJsonBackup": "JSON backup flow",
     "importJsonBackup": "JSON import flow",
     "safeHttpUrl": "safe link validation",
+    "isValidDateText": "calendar date validation",
     "licenseRecordKey": "duplicate import protection",
     "sortLicenses": "table sorting flow",
     'sessionStorage.getItem("licenseManagerUnlocked")': "session restore flow",

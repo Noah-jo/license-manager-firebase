@@ -120,6 +120,15 @@ function getDaysLeft(expiry) {
   return Math.round((expiryDate - today) / 86400000);
 }
 
+function isValidDateText(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
+}
+
 function getStatus(item, expiringDays = 30) {
   const daysLeft = getDaysLeft(item.expiry);
   if (daysLeft === null) return { type: "unknown", label: "日期未設定", daysLeft };
@@ -386,7 +395,7 @@ function normalizeImportedLicense(item, index) {
   const price = item?.price === "" || item?.price == null ? 0 : Number(item.price);
   const subLink = safeHttpUrl(item?.subLink ?? item?.sub_link ?? "");
 
-  if (!name || !seats || !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) {
+  if (!name || !seats || !isValidDateText(expiry)) {
     throw new Error(`第 ${index + 1} 筆資料缺少名稱、數量或有效到期日期。`);
   }
   if (!Number.isFinite(price) || price < 0) {
@@ -626,6 +635,9 @@ licenseForm.addEventListener("submit", async (event) => {
     const payload = readLicenseForm();
     if (!payload.name || !payload.seats || !payload.expiry) {
       throw new Error("軟件名稱、數量／帳戶和到期日期是必填欄位。");
+    }
+    if (!isValidDateText(payload.expiry)) {
+      throw new Error("到期日期不存在，請重新選擇有效日期。");
     }
     if (hasDuplicateLicense(payload, licenseId.value)) {
       throw new Error("已有完全相同的授權資料，沒有儲存。");
