@@ -52,6 +52,9 @@ a { color: inherit; }
 .secondary { background: #edf0f2; border: 1px solid #d6dce1; color: var(--ink); }
 .secondary:hover { background: #dfe5e9; transform: translateY(-1px); }
 .import-button { cursor: pointer; }
+.sort-button { align-items: center; background: transparent; color: inherit; display: inline-flex; font: inherit; gap: 6px; justify-content: flex-start; letter-spacing: inherit; padding: 0; text-align: left; text-transform: inherit; }
+.sort-button:hover { color: var(--orange-dark); }
+.sort-indicator { color: var(--orange); font-size: 13px; line-height: 1; }
 .ghost { background: transparent; border: 1px solid rgba(255,255,255,.25); color: #fff; }
 .ghost:hover { border-color: rgba(255,255,255,.65); background: rgba(255,255,255,.08); }
 .compact { min-height: 36px; padding: 7px 13px; }

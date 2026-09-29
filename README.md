@@ -8,6 +8,8 @@ This is the cloud web version of the local Flask/SQLite License Manager.
 - Cloud Firestore for license data and settings
 - Shared-password gate before the app UI opens
 - JSON backup import for moving data from the local version
+- Sortable license table with one-click filter reset
+- Duplicate-safe JSON import: exact records are skipped and reported
 
 ## Access control
 

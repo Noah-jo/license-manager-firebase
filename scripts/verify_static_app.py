@@ -15,12 +15,16 @@ required_html = {
     'id="json-import"': "JSON import field",
     'id="settings-form"': "password settings form",
     'id="connection-dot"': "connection status indicator",
+    'id="clear-filters"': "clear filters button",
+    'data-sort-key="expiry"': "sortable license table",
 }
 required_js = {
     "unlockWithPassword": "shared password flow",
     "exportJsonBackup": "JSON backup flow",
     "importJsonBackup": "JSON import flow",
     "safeHttpUrl": "safe link validation",
+    "licenseRecordKey": "duplicate import protection",
+    "sortLicenses": "table sorting flow",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",

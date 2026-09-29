@@ -133,6 +133,7 @@
           <button id="export-excel" type="button" class="primary">匯出 Excel</button>
           <button id="export-json" type="button" class="secondary">備份 JSON</button>
           <label class="secondary import-button" for="json-import">匯入 JSON<input id="json-import" type="file" accept="application/json,.json" hidden></label>
+          <button id="clear-filters" type="button" class="secondary">清除篩選</button>
         </div>
       </section>
 
@@ -168,8 +169,15 @@
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>軟件名稱</th><th>數量 / 帳戶</th><th>到期日期</th><th>狀態</th><th>價錢 HK$</th>
-              <th>付款方式</th><th>PIC</th><th>使用者</th><th>連結</th><th>備註</th><th>操作</th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort-key="name" aria-label="按軟件名稱排序">軟件名稱 <span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort-key="seats" aria-label="按數量或帳戶排序">數量 / 帳戶 <span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="ascending"><button type="button" class="sort-button" data-sort-key="expiry" aria-label="按到期日期排序">到期日期 <span class="sort-indicator" aria-hidden="true">↑</span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort-key="status" aria-label="按狀態排序">狀態 <span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort-key="price" aria-label="按價錢排序">價錢 HK$ <span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort-key="paymentMethod" aria-label="按付款方式排序">付款方式 <span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort-key="pic" aria-label="按 PIC 排序">PIC <span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort-key="user" aria-label="按使用者或部門排序">使用者 <span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+              <th scope="col">連結</th><th scope="col">備註</th><th scope="col">操作</th>
             </tr></thead>
             <tbody id="licenses-body"></tbody>
           </table>

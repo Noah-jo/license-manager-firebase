@@ -45,6 +45,7 @@ const settingsForm = $("settings-form");
 const settingsMessage = $("settings-message");
 const connectionDot = $("connection-dot");
 const currentUser = $("current-user");
+const sortState = { key: "expiry", direction: "asc" };
 
 $("today-date").textContent = new Intl.DateTimeFormat("zh-HK", {
   year: "numeric",
@@ -151,6 +152,66 @@ function getFilteredLicenses() {
   });
 }
 
+function licenseRecordKey(item) {
+  return [
+    String(item?.name ?? "").trim(),
+    String(item?.seats ?? "").trim(),
+    String(item?.expiry ?? "").trim(),
+    String(item?.paymentMethod ?? item?.payment_method ?? "").trim(),
+    Number(item?.price || 0).toFixed(2),
+    String(item?.pic ?? "").trim(),
+    String(item?.user ?? "").trim(),
+    safeHttpUrl(item?.subLink ?? item?.sub_link ?? "") || "",
+    String(item?.remarks ?? "").trim()
+  ].join("\u001f");
+}
+
+function sortValue(item, key) {
+  if (key === "status") return getStatus(item, getFilters().expiringDays).daysLeft ?? Number.POSITIVE_INFINITY;
+  if (key === "price") return Number(item.price || 0);
+  if (key === "expiry") return item.expiry || "9999-12-31";
+  return String(item[key] ?? "").trim().toLocaleLowerCase("zh-Hant");
+}
+
+function sortVisibleLicenses(licenses) {
+  const direction = sortState.direction === "asc" ? 1 : -1;
+  return [...licenses].sort((left, right) => {
+    const leftValue = sortValue(left, sortState.key);
+    const rightValue = sortValue(right, sortState.key);
+    let comparison;
+    if (typeof leftValue === "number" && typeof rightValue === "number") {
+      comparison = leftValue - rightValue;
+    } else {
+      comparison = String(leftValue).localeCompare(String(rightValue), "zh-Hant", { numeric: true });
+    }
+    return comparison === 0
+      ? String(left.name || "").localeCompare(String(right.name || ""), "zh-Hant")
+      : comparison * direction;
+  });
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll(".sort-button").forEach((button) => {
+    const active = button.dataset.sortKey === sortState.key;
+    const header = button.closest("th");
+    const indicator = button.querySelector(".sort-indicator");
+    header?.setAttribute("aria-sort", active ? (sortState.direction === "asc" ? "ascending" : "descending") : "none");
+    button.setAttribute("aria-label", `${button.textContent.replace(/[↕↑↓]/g, "").trim()}${active ? (sortState.direction === "asc" ? "，目前遞增排序" : "，目前遞減排序") : "，點擊排序"}`);
+    if (indicator) indicator.textContent = active ? (sortState.direction === "asc" ? "↑" : "↓") : "↕";
+  });
+}
+
+function sortLicenses(key) {
+  if (sortState.key === key) {
+    sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
+  } else {
+    sortState.key = key;
+    sortState.direction = "asc";
+  }
+  updateSortIndicators();
+  renderLicenses();
+}
+
 function escapeHtml(value = "") {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -186,14 +247,16 @@ function renderStats(visible) {
 
 function renderLicenses() {
   const filters = getFilters();
-  const visible = getFilteredLicenses();
+  const filtered = getFilteredLicenses();
+  const visible = sortVisibleLicenses(filtered);
   renderStats(visible);
 
   if (!visible.length) {
+    const hasRecords = state.licenses.length > 0;
     licensesBody.innerHTML = `
       <tr><td colspan="11" class="empty-row">
-        <strong>暫時沒有授權資料</strong>
-        <span class="muted">新增第一項授權，或調整上方搜尋條件。</span>
+        <strong>${hasRecords ? "找不到符合條件的授權" : "暫時沒有授權資料"}</strong>
+        <span class="muted">${hasRecords ? "請清除搜尋或調整篩選條件。" : "新增第一項授權，或匯入 JSON 備份。"}</span>
       </td></tr>`;
     return;
   }
@@ -328,17 +391,35 @@ async function importJsonBackup(file) {
   if (!Array.isArray(records) || !records.length) {
     throw new Error("JSON 備份內沒有可匯入的授權資料。");
   }
-  if (!confirm(`即將新增 ${records.length} 筆授權資料，現有資料不會被刪除。確定繼續嗎？`)) return;
-
   const normalized = records.map(normalizeImportedLicense);
-  for (let offset = 0; offset < normalized.length; offset += 400) {
+  const existingKeys = new Set(state.licenses.map(licenseRecordKey));
+  const unique = [];
+  let skipped = 0;
+  normalized.forEach((record) => {
+    const key = licenseRecordKey(record);
+    if (existingKeys.has(key)) {
+      skipped += 1;
+      return;
+    }
+    existingKeys.add(key);
+    unique.push(record);
+  });
+
+  if (!unique.length) {
+    setMessage(licenseMessage, `沒有新增資料，跳過 ${skipped} 筆完全相同的授權。`, true);
+    return;
+  }
+  const skippedText = skipped ? `，另跳過 ${skipped} 筆完全相同資料` : "";
+  if (!confirm(`即將新增 ${unique.length} 筆授權資料${skippedText}。現有資料不會被刪除，確定繼續嗎？`)) return;
+
+  for (let offset = 0; offset < unique.length; offset += 400) {
     const batch = writeBatch(db);
-    normalized.slice(offset, offset + 400).forEach((record) => {
+    unique.slice(offset, offset + 400).forEach((record) => {
       batch.set(doc(collection(db, "licenses")), record);
     });
     await batch.commit();
   }
-  setMessage(licenseMessage, `已匯入 ${normalized.length} 筆授權資料。`, true);
+  setMessage(licenseMessage, `已匯入 ${unique.length} 筆授權資料${skippedText}。`, true);
 }
 
 function downloadFile(filename, content, type) {
@@ -544,6 +625,17 @@ settingsForm.addEventListener("submit", async (event) => {
 ["search", "status-filter", "expiring-days"].forEach((id) => {
   $(id).addEventListener("input", renderLicenses);
 });
+
+document.querySelectorAll(".sort-button").forEach((button) => {
+  button.addEventListener("click", () => sortLicenses(button.dataset.sortKey));
+});
+$("clear-filters").addEventListener("click", () => {
+  $("search").value = "";
+  $("status-filter").value = "all";
+  $("expiring-days").value = "30";
+  renderLicenses();
+});
+updateSortIndicators();
 
 $("export-csv").addEventListener("click", () => exportRows("csv"));
 $("export-excel").addEventListener("click", () => exportRows("excel"));
