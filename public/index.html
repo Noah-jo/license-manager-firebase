@@ -88,18 +88,18 @@
       </section>
 
       <section class="stats-grid" aria-label="授權統計">
-        <article class="stat-card stat-total">
+        <button type="button" class="stat-card stat-total" data-stat-filter="all" aria-pressed="true" aria-label="顯示全部授權">
           <div class="stat-icon">∑</div>
           <div><span>授權總數</span><strong id="stat-total">0</strong><small>目前篩選結果</small></div>
-        </article>
-        <article class="stat-card stat-expired">
+        </button>
+        <button type="button" class="stat-card stat-expired" data-stat-filter="expired" aria-pressed="false" aria-label="只看已經到期授權">
           <div class="stat-icon">!</div>
           <div><span>已經到期</span><strong id="stat-expired">0</strong><small>需要立即處理</small></div>
-        </article>
-        <article class="stat-card stat-expiring">
+        </button>
+        <button type="button" class="stat-card stat-expiring" data-stat-filter="expiring" aria-pressed="false" aria-label="只看即將到期授權">
           <div class="stat-icon">↘</div>
           <div><span>即將到期</span><strong id="stat-expiring">0</strong><small>依下方日數計算</small></div>
-        </article>
+        </button>
         <article class="stat-card stat-price">
           <div class="stat-icon">$</div>
           <div><span>授權總值</span><strong><small>HK$</small> <span id="stat-total-price">0.00</span></strong><small>目前篩選結果</small></div>

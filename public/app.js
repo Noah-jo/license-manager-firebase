@@ -161,6 +161,12 @@ function getFilters() {
   };
 }
 
+function updateStatFilterStates(status) {
+  document.querySelectorAll("[data-stat-filter]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.statFilter === status));
+  });
+}
+
 function getFilteredLicenses() {
   const filters = getFilters();
   return state.licenses.filter((item) => {
@@ -301,6 +307,7 @@ function renderLicenses() {
   }
 
   const filters = getFilters();
+  updateStatFilterStates(filters.status);
   const filtered = getFilteredLicenses();
   const visible = sortVisibleLicenses(filtered);
   renderStats(visible);
@@ -735,6 +742,13 @@ settingsForm.addEventListener("submit", async (event) => {
 
 document.querySelectorAll(".sort-button").forEach((button) => {
   button.addEventListener("click", () => sortLicenses(button.dataset.sortKey));
+});
+document.querySelectorAll("[data-stat-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    $("status-filter").value = button.dataset.statFilter;
+    renderLicenses();
+    requestAnimationFrame(() => $("license-list").scrollIntoView({ behavior: "smooth", block: "start" }));
+  });
 });
 $("clear-filters").addEventListener("click", () => {
   $("search").value = "";

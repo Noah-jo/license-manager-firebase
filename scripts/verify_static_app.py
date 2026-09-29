@@ -19,6 +19,7 @@ required_html = {
     'id="connection-dot"': "connection status indicator",
     'id="clear-filters"': "clear filters button",
     'data-sort-key="expiry"': "sortable license table",
+    'data-stat-filter="expired"': "quick status filter cards",
     'id="import-json-submit"': "JSON import submit button",
 }
 required_js = {
@@ -31,6 +32,7 @@ required_js = {
     "licenseRecordKey": "duplicate import protection",
     "sortLicenses": "table sorting flow",
     "sortLicensesByExpiry": "complete license snapshot sorting",
+    "updateStatFilterStates": "quick status filter state",
     'sessionStorage.getItem("licenseManagerUnlocked")': "session restore flow",
     "hasDuplicateLicense": "manual duplicate protection",
     "正在同步授權資料": "initial sync loading state",
