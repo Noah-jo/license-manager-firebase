@@ -17,8 +17,9 @@ cd /d "%REPO_DIR%"
 
 for /f "delims=" %%B in ('git branch --show-current') do set "CURRENT_BRANCH=%%B"
 if not "%CURRENT_BRANCH%"=="codex/firebase-web" goto :branch_error
-git diff --quiet || goto :dirty_error
-git diff --cached --quiet || goto :dirty_error
+set "WORKTREE_STATUS="
+for /f "delims=" %%S in ('git status --porcelain --untracked-files=all') do set "WORKTREE_STATUS=%%S"
+if defined WORKTREE_STATUS goto :dirty_error
 
 echo Checking GitHub CLI login...
 gh auth status || goto :auth_error

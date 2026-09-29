@@ -127,7 +127,7 @@ function formatFirebaseError(error) {
 }
 
 function getDaysLeft(expiry) {
-  if (!expiry) return null;
+  if (!isValidDateText(expiry)) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const expiryDate = new Date(`${expiry}T00:00:00`);
@@ -229,8 +229,8 @@ function sortVisibleLicenses(licenses) {
 
 function sortLicensesByExpiry(licenses) {
   return [...licenses].sort((left, right) => {
-    const leftExpiry = String(left.expiry || "9999-12-31");
-    const rightExpiry = String(right.expiry || "9999-12-31");
+    const leftExpiry = isValidDateText(left.expiry) ? left.expiry : "9999-12-31";
+    const rightExpiry = isValidDateText(right.expiry) ? right.expiry : "9999-12-31";
     const expiryOrder = leftExpiry.localeCompare(rightExpiry);
     return expiryOrder || String(left.name || "").localeCompare(String(right.name || ""), "zh-Hant");
   });
