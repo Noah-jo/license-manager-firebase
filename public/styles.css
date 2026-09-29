@@ -39,6 +39,10 @@ input:focus, select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px r
 label { color: var(--ink-2); display: block; font-size: 13px; font-weight: 700; }
 a { color: inherit; }
 .hidden { display: none !important; }
+.sr-only {
+  border: 0; clip: rect(0 0 0 0); clip-path: inset(50%); height: 1px; margin: -1px;
+  overflow: hidden; padding: 0; position: absolute; white-space: nowrap; width: 1px;
+}
 .muted { color: var(--muted); }
 .eyebrow { color: var(--orange); font: 700 11px/1 "DM Sans", sans-serif; letter-spacing: .18em; margin: 0 0 13px; text-transform: uppercase; }
 .message { color: var(--red); font-size: 13px; min-height: 22px; margin: 12px 0 0; }

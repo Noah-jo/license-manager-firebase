@@ -23,6 +23,7 @@ required_html = {
     'id="import-json-submit"': "JSON import submit button",
     'id="add-license"': "empty-state destination",
     'id="expiry-required-mark"': "legacy expiry hint",
+    "軟件授權清單，可按欄位按鈕排序": "accessible license table caption",
 }
 required_js = {
     "unlockWithPassword": "shared password flow",
