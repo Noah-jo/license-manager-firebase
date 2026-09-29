@@ -525,6 +525,9 @@ async function previewJsonBackup(file) {
 }
 
 async function importJsonBackup(file) {
+  if (!syncReady) {
+    throw new Error("正在同步授權資料，請稍候再匯入。");
+  }
   const parsed = JSON.parse(await file.text());
   const { total, unique, skipped, unknownDateCount } = getImportedRecords(parsed);
 
@@ -539,6 +542,9 @@ async function importJsonBackup(file) {
   }
 
   for (let offset = 0; offset < unique.length; offset += 400) {
+    if (!syncReady) {
+      throw new Error("正在同步授權資料，匯入已暫停，請確認連線後再試。");
+    }
     const batch = writeBatch(db);
     unique.slice(offset, offset + 400).forEach((record) => {
       batch.set(doc(collection(db, "licenses")), record);
