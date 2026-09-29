@@ -25,7 +25,8 @@ const db = getFirestore(app);
 const state = {
   unlocked: sessionStorage.getItem("licenseManagerUnlocked") === "true",
   licenses: [],
-  licenseUnsubscribe: null
+  licenseUnsubscribe: null,
+  licenseLoaded: false
 };
 
 const $ = (id) => document.getElementById(id);
@@ -246,6 +247,20 @@ function renderStats(visible) {
 }
 
 function renderLicenses() {
+  if (!state.licenseLoaded) {
+    $("stat-total").textContent = "—";
+    $("stat-expired").textContent = "—";
+    $("stat-expiring").textContent = "—";
+    $("stat-total-price").textContent = "—";
+    $("visible-count").textContent = "同步中";
+    licensesBody.innerHTML = `
+      <tr><td colspan="11" class="empty-row loading-row">
+        <strong>正在同步授權資料</strong>
+        <span class="muted">請稍候，正在連接 Firebase。</span>
+      </td></tr>`;
+    return;
+  }
+
   const filters = getFilters();
   const filtered = getFilteredLicenses();
   const visible = sortVisibleLicenses(filtered);
@@ -296,6 +311,11 @@ function resetLicenseForm() {
   licenseId.value = "";
   formTitle.textContent = "新增授權";
   cancelEdit.classList.add("hidden");
+}
+
+function hasDuplicateLicense(record, ignoreId = "") {
+  const key = licenseRecordKey(record);
+  return state.licenses.some((item) => item.id !== ignoreId && licenseRecordKey(item) === key);
 }
 
 function readLicenseForm() {
@@ -492,15 +512,20 @@ function exportJsonBackup() {
 
 function startLicenseListener() {
   state.licenseUnsubscribe?.();
+  state.licenseLoaded = false;
+  renderLicenses();
   setConnectionState("checking", "正在同步", "正在檢查 Firebase 同步狀態");
   const licensesQuery = query(collection(db, "licenses"), orderBy("expiry", "asc"));
   state.licenseUnsubscribe = onSnapshot(licensesQuery, (snapshot) => {
     state.licenses = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+    state.licenseLoaded = true;
     setConnectionState("connected", "已同步", `已同步 ${state.licenses.length} 筆授權資料`);
     renderLicenses();
     setMessage(licenseMessage);
   }, (error) => {
+    state.licenseLoaded = true;
     setConnectionState("error", "同步失敗", "Firebase 同步失敗");
+    renderLicenses();
     setMessage(licenseMessage, `同步失敗：${formatFirebaseError(error)}`);
   });
 }
@@ -569,6 +594,9 @@ licenseForm.addEventListener("submit", async (event) => {
     if (!payload.name || !payload.seats || !payload.expiry) {
       throw new Error("軟件名稱、數量／帳戶和到期日期是必填欄位。");
     }
+    if (hasDuplicateLicense(payload, licenseId.value)) {
+      throw new Error("已有完全相同的授權資料，沒有儲存。");
+    }
 
     if (licenseId.value) {
       await updateDoc(doc(db, "licenses", licenseId.value), payload);
@@ -636,6 +664,7 @@ $("clear-filters").addEventListener("click", () => {
   renderLicenses();
 });
 updateSortIndicators();
+renderLicenses();
 
 $("export-csv").addEventListener("click", () => exportRows("csv"));
 $("export-excel").addEventListener("click", () => exportRows("excel"));

@@ -26,6 +26,8 @@ required_js = {
     "licenseRecordKey": "duplicate import protection",
     "sortLicenses": "table sorting flow",
     'sessionStorage.getItem("licenseManagerUnlocked")': "session restore flow",
+    "hasDuplicateLicense": "manual duplicate protection",
+    "正在同步授權資料": "initial sync loading state",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",
