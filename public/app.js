@@ -35,6 +35,8 @@ const authScreen = $("auth-screen");
 const appScreen = $("app-screen");
 const authForm = $("auth-form");
 const authMessage = $("auth-message");
+const gatePassword = $("gate-password");
+const togglePassword = $("toggle-password");
 const licenseForm = $("license-form");
 const licenseId = $("license-id");
 const formTitle = $("form-title");
@@ -588,6 +590,15 @@ authForm.addEventListener("submit", async (event) => {
     submitButton.disabled = false;
     submitButton.innerHTML = originalLabel;
   }
+});
+
+togglePassword.addEventListener("click", () => {
+  const showing = gatePassword.type === "text";
+  gatePassword.type = showing ? "password" : "text";
+  togglePassword.textContent = showing ? "顯示" : "隱藏";
+  togglePassword.setAttribute("aria-label", showing ? "顯示密碼" : "隱藏密碼");
+  togglePassword.setAttribute("aria-pressed", String(!showing));
+  gatePassword.focus();
 });
 
 $("logout").addEventListener("click", () => {

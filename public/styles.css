@@ -95,6 +95,10 @@ button:disabled { cursor: wait; opacity: .68; transform: none !important; }
 .input-with-icon { position: relative; }
 .input-with-icon svg { fill: none; height: 18px; left: 14px; position: absolute; stroke: #718096; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; top: calc(50% + 3px); transform: translateY(-50%); width: 18px; z-index: 1; }
 .input-with-icon input { padding-left: 43px; }
+.password-toggle { background: transparent; border-left: 1px solid #d8d5cc; color: var(--muted); font-size: 11px; font-weight: 700; padding: 5px 11px; position: absolute; right: 6px; top: calc(50% + 3px); transform: translateY(-50%); }
+.password-toggle:hover { color: var(--orange-dark); }
+.password-toggle:focus-visible { border-radius: 2px; outline: 3px solid rgba(242,107,56,.22); outline-offset: 2px; }
+.input-with-icon input[type="password"], .input-with-icon input[type="text"] { padding-right: 72px; }
 .auth-note { align-items: center; color: #89939d; display: flex; font-size: 11px; gap: 8px; margin: 28px 0 0; }
 .auth-note span, .connection-dot { background: #2eb67d; border-radius: 50%; box-shadow: 0 0 0 4px rgba(46,182,125,.13); height: 7px; width: 7px; }
 .connection-dot[data-state="checking"] { background: var(--amber); box-shadow: 0 0 0 4px rgba(243,163,51,.14); }

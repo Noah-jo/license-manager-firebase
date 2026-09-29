@@ -11,6 +11,7 @@ JS = (ROOT / "public" / "app.js").read_text(encoding="utf-8")
 required_html = {
     'id="auth-form"': "password login form",
     'id="gate-password"': "shared password field",
+    'id="toggle-password"': "password visibility toggle",
     'id="export-json"': "JSON backup button",
     'id="json-import"': "JSON import field",
     'id="settings-form"': "password settings form",
@@ -21,6 +22,7 @@ required_html = {
 }
 required_js = {
     "unlockWithPassword": "shared password flow",
+    "togglePassword": "password visibility flow",
     "exportJsonBackup": "JSON backup flow",
     "importJsonBackup": "JSON import flow",
     "safeHttpUrl": "safe link validation",
