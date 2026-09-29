@@ -37,6 +37,8 @@ const togglePassword = $("toggle-password");
 const licenseForm = $("license-form");
 const licenseId = $("license-id");
 const formTitle = $("form-title");
+const expiryField = $("expiry");
+const expiryRequiredMark = $("expiry-required-mark");
 const cancelEdit = $("cancel-edit");
 const licensesBody = $("licenses-body");
 const licenseMessage = $("license-message");
@@ -212,7 +214,7 @@ function licenseRecordKey(item) {
 function sortValue(item, key) {
   if (key === "status") return getStatus(item, getFilters().expiringDays).daysLeft ?? Number.POSITIVE_INFINITY;
   if (key === "price") return Number(item.price || 0);
-  if (key === "expiry") return item.expiry || "9999-12-31";
+  if (key === "expiry") return isValidDateText(item.expiry) ? item.expiry : "9999-12-31";
   return String(item[key] ?? "").trim().toLocaleLowerCase("zh-Hant");
 }
 
@@ -366,6 +368,8 @@ function resetLicenseForm() {
   licenseForm.reset();
   licenseId.value = "";
   formTitle.textContent = "新增授權";
+  expiryField.required = true;
+  expiryRequiredMark.hidden = false;
   cancelEdit.classList.add("hidden");
 }
 
@@ -389,7 +393,7 @@ function readLicenseForm() {
   return {
     name: $("name").value.trim(),
     seats: $("seats").value.trim(),
-    expiry: $("expiry").value,
+    expiry: expiryField.value,
     paymentMethod: $("payment-method").value.trim(),
     price,
     pic: $("pic").value.trim(),
@@ -404,6 +408,9 @@ function editLicense(id) {
   const item = state.licenses.find((license) => license.id === id);
   if (!item) return;
   licenseId.value = item.id;
+  const allowBlankExpiry = !item.expiry;
+  expiryField.required = !allowBlankExpiry;
+  expiryRequiredMark.hidden = allowBlankExpiry;
   $("name").value = item.name || "";
   $("seats").value = item.seats || "";
   $("expiry").value = item.expiry || "";
@@ -700,11 +707,15 @@ licenseForm.addEventListener("submit", async (event) => {
     if (!syncReady) {
       throw new Error("正在同步授權資料，請稍候再儲存。");
     }
+    const editingItem = licenseId.value
+      ? state.licenses.find((item) => item.id === licenseId.value)
+      : null;
+    const allowBlankExpiry = Boolean(editingItem && !editingItem.expiry);
     const payload = readLicenseForm();
-    if (!payload.name || !payload.seats || !payload.expiry) {
+    if (!payload.name || !payload.seats || (!payload.expiry && !allowBlankExpiry)) {
       throw new Error("軟件名稱、數量／帳戶和到期日期是必填欄位。");
     }
-    if (!isValidDateText(payload.expiry)) {
+    if (payload.expiry && !isValidDateText(payload.expiry)) {
       throw new Error("到期日期不存在，請重新選擇有效日期。");
     }
     if (hasDuplicateLicense(payload, licenseId.value)) {

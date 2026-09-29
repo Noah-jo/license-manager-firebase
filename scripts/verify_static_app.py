@@ -22,6 +22,7 @@ required_html = {
     'data-stat-filter="expired"': "quick status filter cards",
     'id="import-json-submit"': "JSON import submit button",
     'id="add-license"': "empty-state destination",
+    'id="expiry-required-mark"': "legacy expiry hint",
 }
 required_js = {
     "unlockWithPassword": "shared password flow",
@@ -45,6 +46,9 @@ required_js = {
     "pendingImportCount": "deferred JSON import readiness",
     "新密碼至少需要 6 個字元": "password length validation",
     "unknownDateCount": "legacy backup date warning",
+    "isValidDateText(item.expiry)": "unknown expiry sort placement",
+    "expiryRequiredMark": "legacy edit expiry hint",
+    "allowBlankExpiry": "legacy edit compatibility",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",
