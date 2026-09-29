@@ -4,5 +4,6 @@ export const firebaseConfig = {
   projectId: "jo-license-manager-20260710",
   storageBucket: "jo-license-manager-20260710.firebasestorage.app",
   messagingSenderId: "565565369785",
-  appId: "1:565565369785:web:fed1bdfeb98f9ae62b5a68"
+  appId: "1:565565369785:web:fed1bdfeb98f9ae62b5a68",
+  allowedAdminEmail: "20190911noah@gmail.com"
 };

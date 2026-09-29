@@ -4,25 +4,33 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDoc,
   getFirestore,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
-  updateDoc
+  updateDoc,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
-
-const DEFAULT_PASSWORD_HASH = "e998fc0a412fb55901c4e193face07ff6c6c47a44462aa8c92bc792b7d35b8a2";
-const MASTER_PASSWORD_HASH = "0afe867eef6010ee8326b9fe1d2cee2667413309943129bc6830c26e9f9d0516";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
 const state = {
-  unlocked: sessionStorage.getItem("licenseManagerUnlocked") === "true",
+  unlocked: false,
+  user: null,
   licenses: [],
   licenseUnsubscribe: null
 };
@@ -39,8 +47,9 @@ const formTitle = $("form-title");
 const cancelEdit = $("cancel-edit");
 const licensesBody = $("licenses-body");
 const licenseMessage = $("license-message");
-const settingsForm = $("settings-form");
+const jsonImport = $("json-import");
 const settingsMessage = $("settings-message");
+const settingsAccountEmail = $("settings-account-email");
 
 $("today-date").textContent = new Intl.DateTimeFormat("zh-HK", {
   year: "numeric",
@@ -59,37 +68,15 @@ function setMessage(element, message = "", success = false) {
 }
 
 function isConfigured() {
-  return !firebaseConfig.projectId.startsWith("REPLACE_WITH");
-}
-
-async function sha256(value) {
-  const bytes = new TextEncoder().encode(value);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function getPasswordHash() {
-  const snap = await getDoc(doc(db, "settings", "access"));
-  if (!snap.exists()) return DEFAULT_PASSWORD_HASH;
-  return snap.data().passwordHash || DEFAULT_PASSWORD_HASH;
-}
-
-async function ensurePasswordDoc() {
-  const ref = doc(db, "settings", "access");
-  const snap = await getDoc(ref);
-  if (!snap.exists()) {
-    await setDoc(ref, {
-      passwordHash: DEFAULT_PASSWORD_HASH,
-      updatedAt: serverTimestamp()
-    });
-  }
+  return !firebaseConfig.projectId.startsWith("REPLACE_WITH") && Boolean(firebaseConfig.allowedAdminEmail);
 }
 
 function formatFirebaseError(error) {
   const code = error?.code || "";
   if (code.includes("permission-denied")) return "Firebase 權限不足，請確認 Firestore Rules 已部署。";
+  if (code.includes("popup-closed-by-user")) return "登入視窗已關閉。";
+  if (code.includes("popup-blocked")) return "瀏覽器阻擋了登入視窗，請允許此網站開啟視窗後再試。";
+  if (code.includes("unauthorized-domain")) return "此網站尚未加入 Firebase Authentication 的授權網域。";
   return error?.message || "操作失敗。";
 }
 
@@ -280,6 +267,57 @@ function spreadsheetSafeText(value) {
   return /^[=+\-@]/.test(text) ? `'${text}` : text;
 }
 
+function normalizeImportedLicense(item, index) {
+  const name = String(item?.name ?? "").trim();
+  const seats = String(item?.seats ?? "").trim();
+  const expiry = String(item?.expiry ?? "").trim();
+  const price = item?.price === "" || item?.price == null ? 0 : Number(item.price);
+  const subLink = safeHttpUrl(item?.subLink ?? item?.sub_link ?? "");
+
+  if (!name || !seats || !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) {
+    throw new Error(`第 ${index + 1} 筆資料缺少名稱、數量或有效到期日期。`);
+  }
+  if (!Number.isFinite(price) || price < 0) {
+    throw new Error(`第 ${index + 1} 筆資料的價格無效。`);
+  }
+  if (subLink === null) {
+    throw new Error(`第 ${index + 1} 筆資料的訂閱連結不是 HTTP(S) 網址。`);
+  }
+
+  return {
+    name,
+    seats,
+    expiry,
+    paymentMethod: String(item?.paymentMethod ?? item?.payment_method ?? "").trim(),
+    price,
+    pic: String(item?.pic ?? "").trim(),
+    user: String(item?.user ?? "").trim(),
+    subLink,
+    remarks: String(item?.remarks ?? "").trim(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+}
+
+async function importJsonBackup(file) {
+  const parsed = JSON.parse(await file.text());
+  const records = Array.isArray(parsed) ? parsed : parsed?.licenses;
+  if (!Array.isArray(records) || !records.length) {
+    throw new Error("JSON 備份內沒有可匯入的授權資料。");
+  }
+  if (!confirm(`即將新增 ${records.length} 筆授權資料，現有資料不會被刪除。確定繼續嗎？`)) return;
+
+  const normalized = records.map(normalizeImportedLicense);
+  for (let offset = 0; offset < normalized.length; offset += 400) {
+    const batch = writeBatch(db);
+    normalized.slice(offset, offset + 400).forEach((record) => {
+      batch.set(doc(collection(db, "licenses")), record);
+    });
+    await batch.commit();
+  }
+  setMessage(licenseMessage, `已匯入 ${normalized.length} 筆授權資料。`, true);
+}
+
 function downloadFile(filename, content, type) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
@@ -335,22 +373,59 @@ function startLicenseListener() {
   });
 }
 
-async function unlockWithPassword(password) {
+function isAuthorizedUser(user) {
+  return Boolean(
+    user?.email &&
+    user.email.toLowerCase() === firebaseConfig.allowedAdminEmail.toLowerCase() &&
+    user.emailVerified
+  );
+}
+
+function updateAccountUi(user) {
+  const email = user?.email || "尚未登入";
+  $("current-user").textContent = user?.email ? user.email : "未登入";
+  settingsAccountEmail.textContent = email;
+}
+
+async function unlockWithGoogle() {
   if (!isConfigured()) {
-    throw new Error("請先在 firebase-config.js 填入 Firebase Web App 設定。");
+    throw new Error("請先在 firebase-config.js 填入 Firebase 設定和管理員 email。");
   }
 
-  const inputHash = await sha256(password);
-  const storedHash = await getPasswordHash();
-  const allowed = inputHash === storedHash || inputHash === MASTER_PASSWORD_HASH;
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    if (!isAuthorizedUser(result.user)) {
+      await signOut(auth);
+      throw new Error("此 Google 帳戶沒有授權使用此系統。");
+    }
+  } catch (error) {
+    if (error?.code === "auth/popup-blocked") {
+      await signInWithRedirect(auth, googleProvider);
+      return;
+    }
+    throw error;
+  }
+}
 
-  if (!allowed) {
-    throw new Error("密碼不正確。");
+async function handleAuthStateChange(user) {
+  state.user = user;
+  if (!user) {
+    state.unlocked = false;
+    state.licenseUnsubscribe?.();
+    state.licenseUnsubscribe = null;
+    updateAccountUi(null);
+    showOnly("auth");
+    return;
   }
 
-  await ensurePasswordDoc();
+  if (!isAuthorizedUser(user)) {
+    await signOut(auth);
+    setMessage(authMessage, "此 Google 帳戶沒有授權使用此系統。");
+    return;
+  }
+
   state.unlocked = true;
-  sessionStorage.setItem("licenseManagerUnlocked", "true");
+  updateAccountUi(user);
   showOnly("app");
   startLicenseListener();
 }
@@ -363,8 +438,7 @@ authForm.addEventListener("submit", async (event) => {
   submitButton.disabled = true;
   submitButton.innerHTML = "<span>正在驗證...</span><span aria-hidden=\"true\">···</span>";
   try {
-    await unlockWithPassword($("gate-password").value);
-    $("gate-password").value = "";
+    await unlockWithGoogle();
   } catch (error) {
     setMessage(authMessage, formatFirebaseError(error));
   } finally {
@@ -373,12 +447,13 @@ authForm.addEventListener("submit", async (event) => {
   }
 });
 
-$("logout").addEventListener("click", async () => {
-  state.unlocked = false;
-  sessionStorage.removeItem("licenseManagerUnlocked");
-  state.licenseUnsubscribe?.();
-  showOnly("auth");
-});
+async function logout() {
+  await signOut(auth);
+  setMessage(settingsMessage, "已安全登出。", true);
+}
+
+$("logout").addEventListener("click", logout);
+$("settings-logout").addEventListener("click", logout);
 
 licenseForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -421,41 +496,33 @@ licensesBody.addEventListener("click", async (event) => {
   }
 });
 
-settingsForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  setMessage(settingsMessage);
-  const newPassword = $("new-password").value;
-  const confirmPassword = $("confirm-password").value;
-  if (newPassword !== confirmPassword) {
-    setMessage(settingsMessage, "兩次輸入的新密碼不一致。");
-    return;
-  }
-  try {
-    const passwordHash = await sha256(newPassword);
-    await setDoc(doc(db, "settings", "access"), {
-      passwordHash,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-    settingsForm.reset();
-    setMessage(settingsMessage, "密碼已更新。固定後備密碼仍可登入。", true);
-  } catch (error) {
-    setMessage(settingsMessage, formatFirebaseError(error));
-  }
-});
-
 ["search", "status-filter", "expiring-days"].forEach((id) => {
   $(id).addEventListener("input", renderLicenses);
 });
 
 $("export-csv").addEventListener("click", () => exportRows("csv"));
 $("export-excel").addEventListener("click", () => exportRows("excel"));
+jsonImport.addEventListener("change", async (event) => {
+  const [file] = event.target.files;
+  if (!file) return;
+  setMessage(licenseMessage);
+  try {
+    await importJsonBackup(file);
+  } catch (error) {
+    setMessage(licenseMessage, formatFirebaseError(error));
+  } finally {
+    event.target.value = "";
+  }
+});
 
 if (!isConfigured()) {
   showOnly("auth");
-  setMessage(authMessage, "Firebase config 尚未設定。");
-} else if (state.unlocked) {
-  showOnly("app");
-  startLicenseListener();
+  setMessage(authMessage, "Firebase config 或管理員 email 尚未設定。");
 } else {
   showOnly("auth");
+  onAuthStateChanged(auth, (user) => {
+    handleAuthStateChange(user).catch((error) => {
+      setMessage(authMessage, formatFirebaseError(error));
+    });
+  });
 }

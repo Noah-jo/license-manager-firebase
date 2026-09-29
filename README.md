@@ -6,15 +6,15 @@ This is the cloud web version of the local Flask/SQLite License Manager.
 
 - Firebase Hosting for the static web app
 - Cloud Firestore for license data and settings
-- A shared password gate before the app UI opens
+- Google account sign-in before the app UI opens
 
-## Passwords
+## Access control
 
-- Initial shared password: `36961500`
-- Permanent fallback password: `Noah1234`
-- The shared password can be changed in the Settings section after logging in.
-- The fallback password is hardcoded as a SHA-256 hash in the frontend and is not changed by Settings.
+- The authorized administrator email is configured in `public/firebase-config.js`.
+- Firebase Authentication must have the Google provider enabled.
+- The GitHub Pages domain must be added to Firebase Authentication's authorized domains.
+- Firestore rules only allow the verified authorized email to read or write data.
 
 ## Security note
 
-This is a convenient shared-password gate for a small private tool. Because it is a static frontend app, it is not the same as server-side password verification. The Firestore rules are public so the GitHub Pages app can work without a backend login service. If stricter access control is needed later, add Cloud Functions or switch back to Firebase Auth user accounts.
+The static site uses Firebase Authentication for identity and Firestore rules for the actual data boundary. The email address in the frontend is not a secret; the enforcement happens in Firestore rules.
