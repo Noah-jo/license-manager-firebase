@@ -46,7 +46,7 @@ The online version uses the shared-password gate. The Firestore rules intentiona
 
 ## Local-first release flow
 
-The recommended deployment script now runs the local tests and EXE build first, deploys the current Firestore rules, then pushes the existing commit. The push automatically triggers GitHub Pages once:
+The recommended deployment script now runs the local tests, static web-app contract check, and EXE build first, deploys the current Firestore rules, then pushes the existing commit. The push automatically triggers GitHub Pages once:
 
 ```powershell
 .\deploy_github_pages.bat
