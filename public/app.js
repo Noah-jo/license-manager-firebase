@@ -339,8 +339,13 @@ function downloadFile(filename, content, type) {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
   anchor.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => {
+    URL.revokeObjectURL(url);
+    anchor.remove();
+  }, 1000);
 }
 
 function exportRows(format) {
@@ -374,6 +379,26 @@ function exportRows(format) {
     .join("");
   const excel = `<html><head><meta charset="utf-8"></head><body><table>${htmlRows}</table></body></html>`;
   downloadFile(`licenses-${Date.now()}.xls`, excel, "application/vnd.ms-excel;charset=utf-8");
+}
+
+function exportJsonBackup() {
+  const payload = state.licenses.map((item) => ({
+    name: item.name || "",
+    seats: item.seats || "",
+    expiry: item.expiry || "",
+    paymentMethod: item.paymentMethod || "",
+    price: Number(item.price || 0),
+    pic: item.pic || "",
+    user: item.user || "",
+    subLink: safeHttpUrl(item.subLink) || "",
+    remarks: item.remarks || ""
+  }));
+  downloadFile(
+    `licenses-backup-${Date.now()}.json`,
+    JSON.stringify(payload, null, 2),
+    "application/json;charset=utf-8"
+  );
+  setMessage(licenseMessage, `已備份 ${payload.length} 筆授權資料。`, true);
 }
 
 function startLicenseListener() {
@@ -503,6 +528,7 @@ settingsForm.addEventListener("submit", async (event) => {
 
 $("export-csv").addEventListener("click", () => exportRows("csv"));
 $("export-excel").addEventListener("click", () => exportRows("excel"));
+$("export-json").addEventListener("click", exportJsonBackup);
 jsonImport.addEventListener("change", async (event) => {
   const [file] = event.target.files;
   if (!file) return;
