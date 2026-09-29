@@ -34,6 +34,7 @@ call npx --yes firebase-tools deploy --only firestore:rules --project jo-license
 
 echo.
 echo Pushing branch codex/firebase-web...
+set "GIT_TERMINAL_PROMPT=0"
 git -c credential.helper="!gh auth git-credential" push -u origin codex/firebase-web || goto :push_error
 
 echo.
