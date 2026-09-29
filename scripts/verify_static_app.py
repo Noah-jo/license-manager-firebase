@@ -42,6 +42,8 @@ required_js = {
     "setSyncAvailability": "write safety while Firebase sync is pending",
     "snapshot.metadata.fromCache": "cache-only sync safety",
     "empty-action": "empty-state add action",
+    "pendingImportCount": "deferred JSON import readiness",
+    "新密碼至少需要 6 個字元": "password length validation",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",

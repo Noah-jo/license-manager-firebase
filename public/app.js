@@ -52,6 +52,7 @@ const syncBoundControls = [$("export-csv"), $("export-excel"), $("export-json"),
 const jsonImportLabel = $("json-import-label");
 const sortState = { key: "expiry", direction: "asc" };
 let pendingJsonFile = null;
+let pendingImportCount = 0;
 let importRequestId = 0;
 let syncReady = false;
 
@@ -87,7 +88,10 @@ function setSyncAvailability(ready) {
   jsonImportLabel.setAttribute("aria-disabled", String(!ready));
   if (!ready) {
     pendingJsonFile = null;
+    pendingImportCount = 0;
     importJsonSubmit.disabled = true;
+  } else {
+    importJsonSubmit.disabled = !pendingJsonFile || pendingImportCount === 0;
   }
 }
 
@@ -728,8 +732,16 @@ licensesBody.addEventListener("click", async (event) => {
 settingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setMessage(settingsMessage);
+  if (!syncReady) {
+    setMessage(settingsMessage, "正在同步授權資料，請稍候再更新密碼。");
+    return;
+  }
   const newPassword = $("new-password").value;
   const confirmPassword = $("confirm-password").value;
+  if (newPassword.length < 6) {
+    setMessage(settingsMessage, "新密碼至少需要 6 個字元。");
+    return;
+  }
   if (newPassword !== confirmPassword) {
     setMessage(settingsMessage, "兩次輸入的新密碼不一致。");
     return;
@@ -778,6 +790,7 @@ jsonImport.addEventListener("change", async (event) => {
   const [file] = event.target.files;
   const requestId = ++importRequestId;
   pendingJsonFile = null;
+  pendingImportCount = 0;
   importJsonSubmit.disabled = true;
   setMessage(licenseMessage);
   if (!file) {
@@ -790,6 +803,7 @@ jsonImport.addEventListener("change", async (event) => {
     const result = await previewJsonBackup(file);
     if (requestId !== importRequestId) return;
     pendingJsonFile = file;
+    pendingImportCount = result.unique.length;
     const skippedText = result.skipped ? `，跳過 ${result.skipped} 筆重複` : "";
     setImportSummary(`共 ${result.total} 筆：可新增 ${result.unique.length} 筆${skippedText}`);
     importJsonSubmit.disabled = !syncReady || result.unique.length === 0;
@@ -811,6 +825,7 @@ importJsonSubmit.addEventListener("click", async () => {
     setImportSummary(`匯入失敗：${formatFirebaseError(error)}`, true);
   } finally {
     pendingJsonFile = null;
+    pendingImportCount = 0;
     jsonImport.value = "";
   }
 });
