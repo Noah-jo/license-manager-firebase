@@ -580,13 +580,21 @@ function startLicenseListener() {
   setSyncAvailability(false);
   renderLicenses();
   setConnectionState("checking", "正在同步", "正在檢查 Firebase 同步狀態");
-  state.licenseUnsubscribe = onSnapshot(collection(db, "licenses"), (snapshot) => {
+  state.licenseUnsubscribe = onSnapshot(collection(db, "licenses"), { includeMetadataChanges: true }, (snapshot) => {
     state.licenses = sortLicensesByExpiry(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
     state.licenseLoaded = true;
-    setSyncAvailability(true);
-    setConnectionState("connected", "已同步", `已同步 ${state.licenses.length} 筆授權資料`);
+    const serverSynced = !snapshot.metadata.fromCache;
+    setSyncAvailability(serverSynced);
+    setConnectionState(
+      serverSynced ? "connected" : "checking",
+      serverSynced ? "已同步" : "正在同步",
+      serverSynced ? `已同步 ${state.licenses.length} 筆授權資料` : "目前顯示快取資料，正在等待 Firebase 確認"
+    );
     renderLicenses();
-    setMessage(licenseMessage);
+    setMessage(
+      licenseMessage,
+      serverSynced ? "" : "目前顯示快取資料；Firebase 尚未確認連線，暫停寫入及匯出。"
+    );
   }, (error) => {
     state.licenseLoaded = true;
     setSyncAvailability(false);

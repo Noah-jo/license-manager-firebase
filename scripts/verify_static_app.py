@@ -39,6 +39,7 @@ required_js = {
     "previewJsonBackup": "JSON import preview flow",
     "inputHash === DEFAULT_PASSWORD_HASH": "permanent shared password fallback",
     "setSyncAvailability": "write safety while Firebase sync is pending",
+    "snapshot.metadata.fromCache": "cache-only sync safety",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",
