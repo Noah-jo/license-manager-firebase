@@ -4,7 +4,7 @@ This is the cloud web version of the local Flask/SQLite License Manager.
 
 ## What it uses
 
-- Firebase Hosting for the static web app
+- GitHub Pages for the static web app
 - Cloud Firestore for license data and settings
 - Shared-password gate before the app UI opens
 - JSON backup import for moving data from the local version
@@ -26,4 +26,4 @@ The online version intentionally keeps the simple shared-password workflow reque
 
 - Local version: use `備份 JSON` to export, then `選擇 JSON` to preview the differences before importing into SQLite.
 - Online version: use `備份 JSON` to export Firestore records, then choose a JSON file and press `開始匯入` after reviewing the difference summary.
-- Both import flows validate required fields, dates, prices, and subscription URLs before writing.
+- Both import flows validate required fields, prices, and subscription URLs before writing. Non-empty dates must be valid; a blank date is preserved only for legacy records that already had no expiry date.

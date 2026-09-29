@@ -44,6 +44,7 @@ required_js = {
     "empty-action": "empty-state add action",
     "pendingImportCount": "deferred JSON import readiness",
     "新密碼至少需要 6 個字元": "password length validation",
+    "unknownDateCount": "legacy backup date warning",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",

@@ -331,9 +331,10 @@ function renderLicenses() {
 
   licensesBody.innerHTML = visible.map((item) => {
     const status = getStatus(item, filters.expiringDays);
+    const itemName = escapeHtml(item.name || "授權資料");
     const linkUrl = safeHttpUrl(item.subLink);
     const link = linkUrl
-      ? `<a href="${escapeHtml(linkUrl)}" target="_blank" rel="noreferrer">打開</a>`
+      ? `<a href="${escapeHtml(linkUrl)}" target="_blank" rel="noreferrer" aria-label="打開 ${itemName} 的訂閱連結">打開</a>`
       : "-";
 
     return `
@@ -350,8 +351,8 @@ function renderLicenses() {
         <td>${escapeHtml(item.remarks || "-")}</td>
         <td>
           <div class="row-actions">
-            <button type="button" class="secondary" data-edit="${item.id}">編輯</button>
-            <button type="button" class="danger" data-delete="${item.id}">刪除</button>
+            <button type="button" class="secondary" data-edit="${item.id}" aria-label="編輯 ${itemName}">編輯</button>
+            <button type="button" class="danger" data-delete="${item.id}" aria-label="刪除 ${itemName}">刪除</button>
           </div>
         </td>
       </tr>
@@ -433,8 +434,11 @@ function normalizeImportedLicense(item, index) {
   const price = item?.price === "" || item?.price == null ? 0 : Number(item.price);
   const subLink = safeHttpUrl(item?.subLink ?? item?.sub_link ?? "");
 
-  if (!name || !seats || !isValidDateText(expiry)) {
-    throw new Error(`第 ${index + 1} 筆資料缺少名稱、數量或有效到期日期。`);
+  if (!name || !seats) {
+    throw new Error(`第 ${index + 1} 筆資料缺少名稱或數量。`);
+  }
+  if (expiry && !isValidDateText(expiry)) {
+    throw new Error(`第 ${index + 1} 筆資料的到期日期格式不正確。`);
   }
   if (!Number.isFinite(price) || price < 0) {
     throw new Error(`第 ${index + 1} 筆資料的價格無效。`);
@@ -476,7 +480,12 @@ function getImportedRecords(parsed) {
     existingKeys.add(key);
     unique.push(record);
   });
-  return { total: normalized.length, unique, skipped };
+  return {
+    total: normalized.length,
+    unique,
+    skipped,
+    unknownDateCount: unique.filter((record) => !record.expiry).length
+  };
 }
 
 async function previewJsonBackup(file) {
@@ -486,14 +495,15 @@ async function previewJsonBackup(file) {
 
 async function importJsonBackup(file) {
   const parsed = JSON.parse(await file.text());
-  const { total, unique, skipped } = getImportedRecords(parsed);
+  const { total, unique, skipped, unknownDateCount } = getImportedRecords(parsed);
 
   if (!unique.length) {
     setMessage(licenseMessage, `沒有新增資料，跳過 ${skipped} 筆完全相同的授權。`, true);
     return { total, imported: 0, skipped };
   }
+  const unknownDateText = unknownDateCount ? `，其中 ${unknownDateCount} 筆未設定到期日` : "";
   const skippedText = skipped ? `，另跳過 ${skipped} 筆完全相同資料` : "";
-  if (!confirm(`即將新增 ${unique.length} 筆授權資料${skippedText}。現有資料不會被刪除，確定繼續嗎？`)) {
+  if (!confirm(`即將新增 ${unique.length} 筆授權資料${unknownDateText}${skippedText}。現有資料不會被刪除，確定繼續嗎？`)) {
     return { total, imported: 0, skipped, cancelled: true };
   }
 
@@ -504,8 +514,8 @@ async function importJsonBackup(file) {
     });
     await batch.commit();
   }
-  setMessage(licenseMessage, `已匯入 ${unique.length} 筆授權資料${skippedText}。`, true);
-  return { total, imported: unique.length, skipped };
+  setMessage(licenseMessage, `已匯入 ${unique.length} 筆授權資料${unknownDateText}${skippedText}。`, true);
+  return { total, imported: unique.length, skipped, unknownDateCount };
 }
 
 function setImportSummary(message, error = false) {
@@ -804,8 +814,11 @@ jsonImport.addEventListener("change", async (event) => {
     if (requestId !== importRequestId) return;
     pendingJsonFile = file;
     pendingImportCount = result.unique.length;
+    const unknownDateText = result.unknownDateCount
+      ? `，其中 ${result.unknownDateCount} 筆未設定到期日`
+      : "";
     const skippedText = result.skipped ? `，跳過 ${result.skipped} 筆重複` : "";
-    setImportSummary(`共 ${result.total} 筆：可新增 ${result.unique.length} 筆${skippedText}`);
+    setImportSummary(`共 ${result.total} 筆：可新增 ${result.unique.length} 筆${unknownDateText}${skippedText}`);
     importJsonSubmit.disabled = !syncReady || result.unique.length === 0;
   } catch (error) {
     if (requestId !== importRequestId) return;
