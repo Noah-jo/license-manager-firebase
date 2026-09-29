@@ -314,10 +314,13 @@ function renderLicenses() {
 
   if (!visible.length) {
     const hasRecords = state.licenses.length > 0;
+    const emptyHint = hasRecords
+      ? "請清除搜尋或調整篩選條件。"
+      : `<a class="empty-action" href="#add-license">新增第一項授權</a>，或匯入 JSON 備份。`;
     licensesBody.innerHTML = `
       <tr><td colspan="11" class="empty-row">
         <strong>${hasRecords ? "找不到符合條件的授權" : "暫時沒有授權資料"}</strong>
-        <span class="muted">${hasRecords ? "請清除搜尋或調整篩選條件。" : "新增第一項授權，或匯入 JSON 備份。"}</span>
+        <span class="muted">${emptyHint}</span>
       </td></tr>`;
     return;
   }

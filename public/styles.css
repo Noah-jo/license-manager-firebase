@@ -171,7 +171,7 @@ tbody tr.expiring { background: #fff9ee; box-shadow: inset 3px 0 #eca43c; }
 .status { border-radius: 100px; display: inline-block; font-size: 10px; font-weight: 800; padding: 6px 9px; white-space: nowrap; }
 .status.expired { background: #fce2df; color: var(--red); }.status.expiring { background: #fff0d4; color: #a9570d; }.status.active { background: #dff3e9; color: var(--green); }.status.unknown { background: #eceff1; color: #66727d; }
 .row-actions { display: flex; gap: 7px; }.row-actions .secondary { min-height: 32px; padding: 6px 10px; }
-.empty-row { padding: 50px 20px; text-align: center; }.empty-row strong { color: var(--ink); display: block; font-size: 15px; margin-bottom: 5px; }
+.empty-row { padding: 50px 20px; text-align: center; }.empty-row strong { color: var(--ink); display: block; font-size: 15px; margin-bottom: 5px; }.empty-action { color: var(--orange-dark); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
 
 .settings-panel { scroll-margin-top: 100px; }
 .settings-panel summary { cursor: pointer; list-style: none; }.settings-panel summary::-webkit-details-marker { display: none; }

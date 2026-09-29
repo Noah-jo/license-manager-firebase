@@ -21,6 +21,7 @@ required_html = {
     'data-sort-key="expiry"': "sortable license table",
     'data-stat-filter="expired"': "quick status filter cards",
     'id="import-json-submit"': "JSON import submit button",
+    'id="add-license"': "empty-state destination",
 }
 required_js = {
     "unlockWithPassword": "shared password flow",
@@ -40,6 +41,7 @@ required_js = {
     "inputHash === DEFAULT_PASSWORD_HASH": "permanent shared password fallback",
     "setSyncAvailability": "write safety while Firebase sync is pending",
     "snapshot.metadata.fromCache": "cache-only sync safety",
+    "empty-action": "empty-state add action",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",
