@@ -150,7 +150,9 @@ function isValidDateText(value) {
 
 function getStatus(item, expiringDays = 30) {
   const daysLeft = getDaysLeft(item.expiry);
-  if (daysLeft === null) return { type: "unknown", label: "日期未設定", daysLeft };
+  if (daysLeft === null) {
+    return { type: "unknown", label: item.expiry ? "日期異常" : "日期未設定", daysLeft };
+  }
   if (daysLeft < 0) return { type: "expired", label: `已過期 ${Math.abs(daysLeft)} 日`, daysLeft };
   if (daysLeft <= expiringDays) return { type: "expiring", label: `剩餘 ${daysLeft} 日`, daysLeft };
   return { type: "active", label: `尚餘 ${daysLeft} 日`, daysLeft };
