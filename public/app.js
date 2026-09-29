@@ -749,7 +749,9 @@ licensesBody.addEventListener("click", async (event) => {
       setMessage(licenseMessage, "正在同步授權資料，請稍候再刪除。");
       return;
     }
-    if (!confirm("確定要刪除這筆授權資料嗎？")) return;
+    const license = state.licenses.find((item) => item.id === deleteId);
+    const displayName = license?.name?.trim() || "這筆授權資料";
+    if (!confirm(`確定要刪除「${displayName}」嗎？此動作無法復原。`)) return;
     try {
       await deleteDoc(doc(db, "licenses", deleteId));
       setMessage(licenseMessage, "授權資料已刪除。", true);
