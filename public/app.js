@@ -162,12 +162,19 @@ function getStatus(item, expiringDays = 30) {
 }
 
 function getFilters() {
-  const rawExpiringDays = Number($("expiring-days").value || 30);
+  const rawExpiringDaysText = $("expiring-days").value.trim();
+  const rawExpiringDays = rawExpiringDaysText === "" ? 30 : Number(rawExpiringDaysText);
   return {
     search: $("search").value.trim().toLowerCase(),
     status: $("status-filter").value,
     expiringDays: Number.isFinite(rawExpiringDays) ? Math.max(1, Math.floor(rawExpiringDays)) : 30
   };
+}
+
+function normalizeExpiringDaysInput() {
+  const input = $("expiring-days");
+  const normalized = String(getFilters().expiringDays);
+  if (input.value !== normalized) input.value = normalized;
 }
 
 function updateStatFilterStates(status) {
@@ -800,6 +807,10 @@ settingsForm.addEventListener("submit", async (event) => {
 
 ["search", "status-filter", "expiring-days"].forEach((id) => {
   $(id).addEventListener("input", renderLicenses);
+});
+$("expiring-days").addEventListener("change", () => {
+  normalizeExpiringDaysInput();
+  renderLicenses();
 });
 
 document.querySelectorAll(".sort-button").forEach((button) => {
