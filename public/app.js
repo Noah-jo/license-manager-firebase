@@ -445,12 +445,25 @@ function spreadsheetSafeText(value) {
   return /^[=+\-@]/.test(text) ? `'${text}` : text;
 }
 
+function importTextValue(value, index, fieldName) {
+  if (value == null) return "";
+  if (typeof value === "object") {
+    throw new Error(`第 ${index + 1} 筆資料的${fieldName}必須是文字。`);
+  }
+  return String(value).trim();
+}
+
 function normalizeImportedLicense(item, index) {
-  const name = String(item?.name ?? "").trim();
-  const seats = String(item?.seats ?? "").trim();
-  const expiry = String(item?.expiry ?? "").trim();
-  const price = item?.price === "" || item?.price == null ? 0 : Number(item.price);
-  const subLink = safeHttpUrl(item?.subLink ?? item?.sub_link ?? "");
+  const name = importTextValue(item?.name, index, "軟件名稱");
+  const seats = importTextValue(item?.seats, index, "數量");
+  const expiry = importTextValue(item?.expiry, index, "到期日期");
+  const rawPrice = item?.price;
+  if (rawPrice != null && typeof rawPrice === "object") {
+    throw new Error(`第 ${index + 1} 筆資料的價格無效。`);
+  }
+  const price = rawPrice === "" || rawPrice == null ? 0 : Number(rawPrice);
+  const subLinkText = importTextValue(item?.subLink ?? item?.sub_link, index, "訂閱連結");
+  const subLink = safeHttpUrl(subLinkText);
 
   if (!name || !seats) {
     throw new Error(`第 ${index + 1} 筆資料缺少名稱或數量。`);
@@ -469,12 +482,12 @@ function normalizeImportedLicense(item, index) {
     name,
     seats,
     expiry,
-    paymentMethod: String(item?.paymentMethod ?? item?.payment_method ?? "").trim(),
+    paymentMethod: importTextValue(item?.paymentMethod ?? item?.payment_method, index, "付款方式"),
     price,
-    pic: String(item?.pic ?? "").trim(),
-    user: String(item?.user ?? "").trim(),
+    pic: importTextValue(item?.pic, index, "PIC"),
+    user: importTextValue(item?.user, index, "使用者"),
     subLink,
-    remarks: String(item?.remarks ?? "").trim(),
+    remarks: importTextValue(item?.remarks, index, "備註"),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
