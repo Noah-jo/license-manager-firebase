@@ -576,6 +576,10 @@ function downloadFile(filename, content, type) {
 }
 
 function exportRows(format) {
+  if (!syncReady) {
+    setMessage(licenseMessage, "正在同步授權資料，請稍候再匯出。");
+    return;
+  }
   const filters = getFilters();
   const rows = getFilteredLicenses().map((item) => {
     const status = getStatus(item, filters.expiringDays);
@@ -609,6 +613,10 @@ function exportRows(format) {
 }
 
 function exportJsonBackup() {
+  if (!syncReady) {
+    setMessage(licenseMessage, "正在同步授權資料，請稍候再匯出。");
+    return;
+  }
   const payload = state.licenses.map((item) => ({
     name: item.name || "",
     seats: item.seats || "",
@@ -749,6 +757,9 @@ licenseForm.addEventListener("submit", async (event) => {
     if (hasDuplicateLicense(payload, licenseId.value)) {
       throw new Error("已有完全相同的授權資料，沒有儲存。");
     }
+    if (!syncReady) {
+      throw new Error("正在同步授權資料，請稍候再儲存。");
+    }
 
     if (licenseId.value) {
       await updateDoc(doc(db, "licenses", licenseId.value), payload);
@@ -786,6 +797,9 @@ licensesBody.addEventListener("click", async (event) => {
     const displayName = license?.name?.trim() || "這筆授權資料";
     if (!confirm(`確定要刪除「${displayName}」嗎？此動作無法復原。`)) return;
     try {
+      if (!syncReady) {
+        throw new Error("正在同步授權資料，請稍候再刪除。");
+      }
       await deleteDoc(doc(db, "licenses", deleteId));
       setMessage(licenseMessage, "授權資料已刪除。", true);
     } catch (error) {
@@ -812,6 +826,9 @@ settingsForm.addEventListener("submit", async (event) => {
     return;
   }
   try {
+    if (!syncReady) {
+      throw new Error("正在同步授權資料，請稍候再更新密碼。");
+    }
     const passwordHash = await sha256(newPassword);
     await setDoc(doc(db, "settings", "access"), {
       passwordHash,
