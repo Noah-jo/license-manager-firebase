@@ -41,6 +41,7 @@ required_js = {
     "sortLicensesByExpiry": "complete license snapshot sorting",
     "updateStatFilterStates": "quick status filter state",
     'sessionStorage.getItem("licenseManagerUnlocked")': "session restore flow",
+    'jsonImportLabel.setAttribute("tabindex", ready ? "0" : "-1")': "disabled import control is not focusable",
     "hasDuplicateLicense": "manual duplicate protection",
     "正在同步授權資料": "initial sync loading state",
     "previewJsonBackup": "JSON import preview flow",

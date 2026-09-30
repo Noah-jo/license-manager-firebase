@@ -161,6 +161,7 @@ function setSyncAvailability(ready) {
   });
   jsonImportLabel.classList.toggle("disabled", !ready);
   jsonImportLabel.setAttribute("aria-disabled", String(!ready));
+  jsonImportLabel.setAttribute("tabindex", ready ? "0" : "-1");
   if (!ready) {
     pendingJsonFile = null;
     pendingImportCount = 0;
