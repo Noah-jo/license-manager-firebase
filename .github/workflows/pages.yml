@@ -25,10 +25,13 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
+      - name: Prepare versioned assets
+        run: python3 scripts/prepare_pages.py
+
       - name: Upload static site
         uses: actions/upload-pages-artifact@v5
         with:
-          path: public
+          path: _site
 
   deploy:
     environment:
