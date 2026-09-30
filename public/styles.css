@@ -167,11 +167,20 @@ table { border-collapse: separate; border-spacing: 0; min-width: 1480px; width: 
 th, td { border-bottom: 1px solid #e6e3dc; padding: 14px 15px; text-align: left; vertical-align: middle; }
 th { background: #f0eee7; color: #52606d; font-size: 10px; font-weight: 800; letter-spacing: .04em; position: sticky; top: 0; text-transform: uppercase; z-index: 1; }
 td { color: #3d4c5a; font-size: 12px; }
+th:first-child, td:first-child { left: 0; }
+th:last-child, td:last-child { right: 0; }
+th:first-child, th:last-child { background: #f0eee7; z-index: 3; }
+td:first-child, td:last-child { background: var(--surface); position: sticky; z-index: 2; }
+td:first-child { box-shadow: 7px 0 12px -10px rgba(16,42,67,.65); }
+td:last-child { box-shadow: -7px 0 12px -10px rgba(16,42,67,.65); }
 td:first-child strong { color: var(--ink); font-size: 13px; }
 tbody tr { box-shadow: inset 3px 0 transparent; transition: background .16s; }
 tbody tr:hover { background: #f7f8f6; }
 tbody tr.expired { background: #fff4f2; box-shadow: inset 3px 0 var(--red); }
 tbody tr.expiring { background: #fff9ee; box-shadow: inset 3px 0 #eca43c; }
+tbody tr:hover td:first-child, tbody tr:hover td:last-child { background: #f7f8f6; }
+tbody tr.expired td:first-child, tbody tr.expired td:last-child { background: #fff4f2; }
+tbody tr.expiring td:first-child, tbody tr.expiring td:last-child { background: #fff9ee; }
 .status { border-radius: 100px; display: inline-block; font-size: 10px; font-weight: 800; padding: 6px 9px; white-space: nowrap; }
 .status.expired { background: #fce2df; color: var(--red); }.status.expiring { background: #fff0d4; color: #a9570d; }.status.active { background: #dff3e9; color: var(--green); }.status.unknown { background: #eceff1; color: #66727d; }
 .row-actions { display: flex; gap: 7px; }.row-actions .secondary { min-height: 32px; padding: 6px 10px; }

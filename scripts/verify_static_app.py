@@ -7,6 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 HTML = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
 JS = (ROOT / "public" / "app.js").read_text(encoding="utf-8")
+CSS = (ROOT / "public" / "styles.css").read_text(encoding="utf-8")
 
 required_html = {
     'id="auth-form"': "password login form",
@@ -73,6 +74,9 @@ required_js = {
     "正在同步授權資料，請稍候再匯出": "export read safety",
     "JSON 格式不正確，請選擇有效的 JSON 備份檔": "friendly online JSON parse error",
 }
+required_css = {
+    "td:first-child, td:last-child { background: var(--surface); position: sticky; z-index: 2; }": "context-preserving table columns",
+}
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",
     "GoogleAuthProvider": "Google provider",
@@ -88,6 +92,9 @@ for marker, label in required_html.items():
 for marker, label in required_js.items():
     if marker not in JS:
         errors.append(f"missing JavaScript {label}: {marker}")
+for marker, label in required_css.items():
+    if marker not in CSS:
+        errors.append(f"missing CSS {label}: {marker}")
 for marker, label in forbidden_auth.items():
     if marker in HTML or marker in JS:
         errors.append(f"forbidden {label}: {marker}")
