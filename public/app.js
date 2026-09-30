@@ -1014,6 +1014,13 @@ jsonImport.addEventListener("change", async (event) => {
     setImportSummary(`檢查失敗：${formatFirebaseError(error)}`, true);
   }
 });
+
+jsonImportLabel.addEventListener("keydown", (event) => {
+  if ((event.key === "Enter" || event.key === " ") && !jsonImport.disabled) {
+    event.preventDefault();
+    jsonImport.click();
+  }
+});
 importJsonSubmit.addEventListener("click", async () => {
   if (!pendingJsonFile) return;
   const file = pendingJsonFile;
