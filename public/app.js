@@ -715,6 +715,10 @@ function downloadFile(filename, content, type) {
   }, 1000);
 }
 
+function excelCellText(value) {
+  return escapeHtml(value).replace(/\r\n?|\n/g, '<br style="mso-data-placement:same-cell;">');
+}
+
 function exportRows(format) {
   if (!syncReady) {
     setMessage(licenseMessage, "正在同步授權資料，請稍候再匯出。");
@@ -746,7 +750,7 @@ function exportRows(format) {
   }
 
   const htmlRows = [headers, ...rows]
-    .map((row, index) => `<tr>${row.map((cell) => index === 0 ? `<th>${escapeHtml(cell)}</th>` : `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`)
+    .map((row, index) => `<tr>${row.map((cell) => index === 0 ? `<th>${escapeHtml(cell)}</th>` : `<td>${excelCellText(cell)}</td>`).join("")}</tr>`)
     .join("");
   const excel = `<html><head><meta charset="utf-8"></head><body><table>${htmlRows}</table></body></html>`;
   downloadFile(`licenses-${Date.now()}.xls`, excel, "application/vnd.ms-excel;charset=utf-8");
