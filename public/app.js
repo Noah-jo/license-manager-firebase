@@ -462,6 +462,14 @@ function renderLicenses() {
   }).join("");
 }
 
+function refreshLicenseTextValidity() {
+  ["name", "seats"].forEach((id) => {
+    const field = $(id);
+    field.setCustomValidity(field.value && !field.value.trim()
+      ? "此欄位不能只填空白，請輸入有效內容。" : "");
+  });
+}
+
 function snapshotLicenseForm() {
   return JSON.stringify(["name", "seats", "expiry", "payment-method", "price", "pic", "user", "sub-link", "remarks"]
     .map((id) => [id, $(id).value]));
@@ -496,6 +504,7 @@ window.addEventListener("beforeunload", (event) => {
 
 function resetLicenseForm() {
   licenseForm.reset();
+  refreshLicenseTextValidity();
   licenseId.value = "";
   formTitle.textContent = "新增授權";
   expiryField.required = true;
@@ -552,6 +561,7 @@ function editLicense(id) {
   $("user").value = item.user || "";
   $("sub-link").value = item.subLink || "";
   $("remarks").value = item.remarks || "";
+  refreshLicenseTextValidity();
   formTitle.textContent = "編輯授權";
   cancelEdit.classList.remove("hidden");
   licenseFormBaseline = snapshotLicenseForm();
@@ -574,6 +584,7 @@ function duplicateLicense(id) {
   $("user").value = String(item.user ?? "");
   $("sub-link").value = String(item.subLink ?? "");
   $("remarks").value = String(item.remarks ?? "");
+  refreshLicenseTextValidity();
   formTitle.textContent = "複製授權";
   licenseFormBaseline = emptyLicenseFormSnapshot;
   cancelEdit.classList.remove("hidden");
@@ -918,6 +929,10 @@ window.addEventListener("online", () => {
   if (state.unlocked) startLicenseListener();
 });
 
+licenseForm.addEventListener("input", (event) => {
+  if (["name", "seats"].includes(event.target.id)) refreshLicenseTextValidity();
+});
+
 licenseForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (licenseSavePending) return;
@@ -957,6 +972,7 @@ licenseForm.addEventListener("submit", async (event) => {
     setMessage(licenseMessage, "授權資料已儲存。", true);
   } catch (error) {
     setMessage(licenseMessage, formatFirebaseError(error));
+    licenseMessage.focus();
   } finally {
     setLicenseSavePending(false);
   }

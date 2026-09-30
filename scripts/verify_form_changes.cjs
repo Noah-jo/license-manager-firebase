@@ -3,14 +3,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
-const fields = Object.fromEntries(['name', 'seats', 'expiry', 'payment-method', 'price', 'pic', 'user', 'sub-link', 'remarks'].map((id) => [id, { value: '' }]));
+const fields = Object.fromEntries(['name', 'seats', 'expiry', 'payment-method', 'price', 'pic', 'user', 'sub-link', 'remarks'].map((id) => [id, { value: '', validity: '', setCustomValidity(message) { this.validity = message; } }]));
 let accept = false;
 let prompts = 0;
 let beforeUnload;
+let errorFocusCount = 0;
 const context = vm.createContext({
   $: (id) => fields[id],
   state: { unlocked: true, licenses: [{ id: 'a', name: 'Original', seats: '1', expiry: '2030-01-15' }, { id: 'b', name: 'Other', seats: '2', expiry: '2031-01-15' }] },
-  licenseId: { value: '' }, expiryField: fields.expiry, expiryRequiredMark: {}, formTitle: {}, licenseMessage: {},
+  licenseId: { value: '' }, expiryField: fields.expiry, expiryRequiredMark: {}, formTitle: {}, licenseMessage: { focus() { errorFocusCount++; } },
   cancelEdit: { classList: { add() {}, remove() {} } },
   licenseForm: { reset() { Object.values(fields).forEach((field) => { field.value = ''; }); }, setAttribute() {} },
   saveLicenseButton: {}, syncReady: true,
@@ -19,13 +20,32 @@ const context = vm.createContext({
   window: { confirm() { prompts++; return accept; }, addEventListener(type, handler) { assert.equal(type, 'beforeunload'); beforeUnload = handler; } },
   setMessage() {}
 });
-const helpersStart = source.indexOf('function snapshotLicenseForm()');
+const helpersStart = source.indexOf('function refreshLicenseTextValidity()');
 const helpersEnd = source.indexOf('function hasDuplicateLicense(', helpersStart);
 const actionsStart = source.indexOf('function editLicense(');
 const actionsEnd = source.indexOf('function csvEscape(', actionsStart);
 assert.ok(helpersStart >= 0 && helpersEnd > helpersStart && actionsStart >= 0 && actionsEnd > actionsStart);
 vm.runInContext(source.slice(helpersStart, helpersEnd) + source.slice(actionsStart, actionsEnd), context);
 vm.runInContext('let licenseSavePending = false; const emptyLicenseFormSnapshot = snapshotLicenseForm(); let licenseFormBaseline = emptyLicenseFormSnapshot;', context);
+let inputHandler;
+context.licenseForm.addEventListener = (_, handler) => { inputHandler = handler; };
+const inputStart = source.indexOf('licenseForm.addEventListener("input"');
+const inputEnd = source.indexOf('licenseForm.addEventListener("submit"', inputStart);
+assert.ok(inputStart >= 0 && inputEnd > inputStart);
+vm.runInContext(source.slice(inputStart, inputEnd), context);
+context.editLicense('a');
+fields.name.value = '　 \t';
+inputHandler({ target: { id: 'name' } });
+assert.match(fields.name.validity, /不能只填空白/);
+fields.name.value = 'Corrected';
+inputHandler({ target: { id: 'name' } });
+assert.equal(fields.name.validity, '', 'Typing valid text clears the custom error');
+fields.seats.value = '  ';
+inputHandler({ target: { id: 'seats' } });
+assert.match(fields.seats.validity, /不能只填空白/);
+context.resetLicenseForm();
+assert.equal(fields.name.validity, '', 'Reset clears stale custom validation');
+assert.equal(fields.seats.validity, '');
 context.editLicense('a');
 assert.equal(prompts, 0);
 assert.equal(context.hasUnsavedLicenseForm(), false, 'Loading an existing record is clean');
@@ -107,6 +127,7 @@ async function verifyPendingWrites() {
   assert.equal(fields.name.readOnly, true);
   rejectWrite(new Error('Simulated write failure'));
   await failed;
+  assert.equal(errorFocusCount, 1, 'A failed write focuses the visible error summary');
   assert.equal(fields.name.value, 'Pending record', 'Failure retains every input');
   assert.equal(fields.name.readOnly, false);
   assert.equal(context.hasUnsavedLicenseForm(), true);
