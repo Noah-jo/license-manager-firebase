@@ -40,6 +40,7 @@ async function verifyBackupReader() {
     context.jsonImport = { value: 'same-backup.json', files: [file], addEventListener: (_, handler) => { changeHandler = handler; } };
     context.importJsonSubmit = { disabled: false };
     context.importRequestId = 0;
+    context.jsonImportPending = false;
     context.syncReady = true;
     context.licenseMessage = {};
     context.setMessage = () => {};

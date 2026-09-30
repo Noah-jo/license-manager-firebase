@@ -61,6 +61,7 @@ const VIEW_SORT_KEYS = new Set(["name", "seats", "expiry", "status", "price", "p
 let pendingJsonFile = null;
 let pendingImportCount = 0;
 let importRequestId = 0;
+let jsonImportPending = false;
 let syncReady = false;
 let licenseSavePending = false;
 const emptyLicenseFormSnapshot = snapshotLicenseForm();
@@ -162,15 +163,16 @@ function setSyncAvailability(ready) {
   syncBoundControls.forEach((control) => {
     control.disabled = !ready;
   });
-  jsonImportLabel.classList.toggle("disabled", !ready);
-  jsonImportLabel.setAttribute("aria-disabled", String(!ready));
-  jsonImportLabel.setAttribute("tabindex", ready ? "0" : "-1");
+  jsonImport.disabled = !ready || jsonImportPending;
+  jsonImportLabel.classList.toggle("disabled", jsonImport.disabled);
+  jsonImportLabel.setAttribute("aria-disabled", String(jsonImport.disabled));
+  jsonImportLabel.setAttribute("tabindex", jsonImport.disabled ? "-1" : "0");
   if (!ready) {
     pendingJsonFile = null;
     pendingImportCount = 0;
     importJsonSubmit.disabled = true;
   } else {
-    importJsonSubmit.disabled = !pendingJsonFile || pendingImportCount === 0;
+    importJsonSubmit.disabled = jsonImportPending || !pendingJsonFile || pendingImportCount === 0;
   }
 }
 
@@ -1052,6 +1054,7 @@ $("export-csv").addEventListener("click", () => exportRows("csv"));
 $("export-excel").addEventListener("click", () => exportRows("excel"));
 $("export-json").addEventListener("click", exportJsonBackup);
 jsonImport.addEventListener("change", async (event) => {
+  if (jsonImportPending) return;
   const [file] = event.target.files;
   const requestId = ++importRequestId;
   pendingJsonFile = null;
@@ -1089,10 +1092,13 @@ jsonImportLabel.addEventListener("keydown", (event) => {
   }
 });
 importJsonSubmit.addEventListener("click", async () => {
-  if (!pendingJsonFile) return;
+  if (jsonImportPending || !pendingJsonFile) return;
   const file = pendingJsonFile;
-  importJsonSubmit.disabled = true;
+  jsonImportPending = true;
+  importJsonSubmit.setAttribute("aria-busy", "true");
+  setSyncAvailability(syncReady);
   setMessage(licenseMessage);
+  setImportSummary("正在處理匯入，請勿關閉頁面…");
   try {
     const result = await importJsonBackup(file);
     setImportSummary(result?.cancelled ? "已取消匯入；可重新選擇檔案" : "匯入完成；可再選擇其他 JSON 檔案");
@@ -1103,6 +1109,9 @@ importJsonSubmit.addEventListener("click", async () => {
     pendingJsonFile = null;
     pendingImportCount = 0;
     jsonImport.value = "";
+    jsonImportPending = false;
+    importJsonSubmit.setAttribute("aria-busy", "false");
+    setSyncAvailability(syncReady);
   }
 });
 
