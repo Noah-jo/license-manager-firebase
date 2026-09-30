@@ -62,6 +62,7 @@ let pendingJsonFile = null;
 let pendingImportCount = 0;
 let importRequestId = 0;
 let syncReady = false;
+let licenseSavePending = false;
 const emptyLicenseFormSnapshot = snapshotLicenseForm();
 let licenseFormBaseline = emptyLicenseFormSnapshot;
 
@@ -157,7 +158,7 @@ function setConnectionState(state, label, title = label) {
 
 function setSyncAvailability(ready) {
   syncReady = ready;
-  saveLicenseButton.disabled = !ready;
+  saveLicenseButton.disabled = !ready || licenseSavePending;
   syncBoundControls.forEach((control) => {
     control.disabled = !ready;
   });
@@ -464,11 +465,24 @@ function hasUnsavedLicenseForm() {
 }
 
 function confirmDiscardLicenseForm() {
+  if (licenseSavePending) {
+    setMessage(licenseMessage, "正在儲存授權，請稍候再切換表單。");
+    return false;
+  }
   return !hasUnsavedLicenseForm() || window.confirm("目前表單有未儲存的資料。確定要放棄這些變更嗎？");
 }
 
+function setLicenseSavePending(pending) {
+  licenseSavePending = pending;
+  saveLicenseButton.disabled = pending || !syncReady;
+  cancelEdit.disabled = pending;
+  licenseForm.setAttribute("aria-busy", String(pending));
+  ["name", "seats", "expiry", "payment-method", "price", "pic", "user", "sub-link", "remarks"]
+    .forEach((id) => { $(id).readOnly = pending; });
+}
+
 window.addEventListener("beforeunload", (event) => {
-  if (!state.unlocked || !hasUnsavedLicenseForm()) return;
+  if (!state.unlocked || (!licenseSavePending && !hasUnsavedLicenseForm())) return;
   event.preventDefault();
   event.returnValue = "";
 });
@@ -868,6 +882,7 @@ window.addEventListener("online", () => {
 
 licenseForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (licenseSavePending) return;
   setMessage(licenseMessage);
   const saveButton = licenseForm.querySelector(".save-button");
   saveButton.disabled = true;
@@ -893,6 +908,8 @@ licenseForm.addEventListener("submit", async (event) => {
       throw new Error("正在同步授權資料，請稍候再儲存。");
     }
 
+    setLicenseSavePending(true);
+    setMessage(licenseMessage, "正在儲存授權…");
     if (licenseId.value) {
       await updateDoc(doc(db, "licenses", licenseId.value), payload);
     } else {
@@ -903,7 +920,7 @@ licenseForm.addEventListener("submit", async (event) => {
   } catch (error) {
     setMessage(licenseMessage, formatFirebaseError(error));
   } finally {
-    saveButton.disabled = !syncReady;
+    setLicenseSavePending(false);
   }
 });
 
