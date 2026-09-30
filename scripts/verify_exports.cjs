@@ -111,3 +111,22 @@ context.state.licenseLoaded = false;
 context.renderLicenses();
 assert.equal(priceFields['stat-price-note'].textContent, '等待同步');
 console.log('Legacy price rendering checks passed (escaped original values and cleared stale totals).');
+
+for (const value of ['=1+1', '+1+1', '-1+1', '@SUM(1,1)', '\t=1+1', '\r=1+1', '\ntext', '  =1+1', '　＠SUM(1,1)', '＝1+1', '＋1+1', '－1+1']) {
+  assert.equal(context.spreadsheetSafeText(value), "'" + value);
+}
+for (const value of ['normal', 'two\rrows', 'two\nrows', 'quoted, "text"', '　normal', '']) {
+  assert.equal(context.spreadsheetSafeText(value), value);
+}
+assert.equal(context.csvEscape('one\rtwo'), '"one\rtwo"', 'Lone CR must not break a CSV record');
+assert.equal(context.csvEscape('one\r"two'), '"one\r""two"');
+context.state.licenses = [{ name: 'Legacy export', seats: '1', expiry: '=1+1', price: 0, remarks: 'one\rtwo' }];
+context.exportRows('csv');
+assert.ok(output.content.includes("'=1+1"));
+assert.ok(output.content.includes('"one\rtwo"'));
+context.exportRows('excel');
+assert.ok(output.content.includes('&#039;=1+1'));
+context.exportJsonBackup();
+assert.equal(JSON.parse(output.content)[0].expiry, '=1+1');
+assert.equal(JSON.parse(output.content)[0].remarks, 'one\rtwo');
+console.log('Spreadsheet boundary checks passed (control characters, Unicode prefixes, lone CR and raw backups).');

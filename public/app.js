@@ -622,13 +622,13 @@ function duplicateLicense(id) {
 
 function csvEscape(value) {
   const text = String(value ?? "");
-  if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`;
+  if (/[",\r\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`;
   return text;
 }
 
 function spreadsheetSafeText(value) {
   const text = String(value ?? "");
-  return /^[=+\-@]/.test(text) ? `'${text}` : text;
+  return /^[\t\r\n]/.test(text) || /^[=+\-@＝＋－＠]/.test(text.trimStart()) ? `'${text}` : text;
 }
 
 function importTextValue(value, index, fieldName) {
@@ -799,7 +799,7 @@ function exportRows(format) {
     return [
       spreadsheetSafeText(item.name),
       spreadsheetSafeText(item.seats),
-      item.expiry,
+      spreadsheetSafeText(item.expiry),
       status.label,
       status.daysLeft ?? "",
       priceExportText(item.price),
