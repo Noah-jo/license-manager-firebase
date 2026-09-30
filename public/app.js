@@ -442,7 +442,7 @@ function renderLicenses() {
         <td>${escapeHtml(item.pic || "-")}</td>
         <td>${escapeHtml(item.user || "-")}</td>
         <td>${link}</td>
-        <td>${escapeHtml(item.remarks || "-")}</td>
+        <td class="license-remarks">${escapeHtml(item.remarks || "-")}</td>
         <td>
           <div class="row-actions">
             <button type="button" class="secondary" data-edit="${item.id}" aria-label="編輯 ${itemName}">編輯</button>

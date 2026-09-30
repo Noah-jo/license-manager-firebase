@@ -26,16 +26,18 @@ body::before {
   background-image: linear-gradient(rgba(16,42,67,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(16,42,67,.12) 1px, transparent 1px);
   background-size: 48px 48px;
 }
-button, input, select { font: inherit; }
+button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { border: 0; cursor: pointer; }
 button:focus-visible, a:focus-visible { outline: 3px solid rgba(242,107,56,.38); outline-offset: 3px; }
-input, select {
+input, select, textarea {
   width: 100%; min-height: 46px; border: 1px solid #cbc8be; border-radius: 3px; background: #fff;
   color: var(--ink); margin-top: 7px; padding: 11px 13px; outline: none; transition: border-color .2s, box-shadow .2s, transform .2s;
 }
-input::placeholder { color: #a3a8ae; }
-input:focus, select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(242,107,56,.13); }
+input::placeholder, textarea::placeholder { color: #a3a8ae; }
+input:focus, select:focus, textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(242,107,56,.13); }
+textarea { display: block; line-height: 1.6; min-height: 94px; resize: vertical; }
+.license-remarks { min-width: 180px; max-width: 320px; overflow-wrap: anywhere; white-space: pre-line; }
 label { color: var(--ink-2); display: block; font-size: 13px; font-weight: 700; }
 a { color: inherit; }
 .hidden { display: none !important; }
