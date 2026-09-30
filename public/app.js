@@ -315,7 +315,7 @@ function sortVisibleLicenses(licenses) {
     const rightValue = sortValue(right, sortState.key);
     let comparison;
     if (typeof leftValue === "number" && typeof rightValue === "number") {
-      comparison = leftValue - rightValue;
+      comparison = leftValue === rightValue ? 0 : leftValue < rightValue ? -1 : 1;
     } else {
       comparison = String(leftValue).localeCompare(String(rightValue), "zh-Hant", { numeric: true });
     }
