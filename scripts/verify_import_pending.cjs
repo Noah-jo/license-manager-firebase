@@ -73,6 +73,48 @@ async function check(outcome) {
     logoutHandler();
     assert.equal(context.state.unlocked, false, 'Logout works again after import ends');
 }
-Promise.all(['success', 'failure', 'cancel'].map(check))
-    .then(() => console.log('Online pending import checks passed (locks, sync events, duplicate submits, completion and failure).'))
+async function checkBatches(outcome) {
+    const summaries = [], batchSizes = [];
+    let batchNumber = 0, message = '';
+    const context = vm.createContext({
+        syncReady: true, db: {}, confirm: () => outcome !== 'cancel',
+        readJsonBackup: async () => ({}),
+        getImportedRecords: () => ({ total: 801, unique: Array.from({ length: 801 }, (_, id) => ({ id })), skipped: 0, unknownDateCount: 0 }),
+        licenseMessage: {}, setMessage: (_, text) => message = text,
+        setImportSummary: text => summaries.push(text), formatFirebaseError: error => error.message,
+        collection: () => ({}), doc: () => ({}),
+        writeBatch: () => {
+            let size = 0;
+            const number = ++batchNumber;
+            return { set() { size++; }, async commit() {
+                batchSizes.push(size);
+                if (outcome === 'first-failure' || (outcome === 'partial-failure' && number === 2)) throw new Error('Simulated batch failure');
+                if (outcome === 'offline' && number === 1) context.syncReady = false;
+            } };
+        }
+    });
+    vm.runInContext(section('async function importJsonBackup(', 'function setImportSummary('), context);
+    if (['first-failure', 'partial-failure', 'offline'].includes(outcome)) {
+        await assert.rejects(context.importJsonBackup({}), outcome === 'first-failure' ? /成功匯入 0 \/ 801 筆/ : /成功匯入 400 \/ 801 筆/);
+        assert.ok(summaries.some(text => text.includes('0 / 801')));
+        assert.equal(batchNumber, outcome === 'partial-failure' ? 2 : 1, 'Do not create later batches after failure');
+        assert.equal(message, '', 'Partial imports must not report complete success');
+    } else {
+        const result = await context.importJsonBackup({});
+        if (outcome === 'cancel') {
+            assert.equal(result.cancelled, true);
+            assert.equal(batchNumber, 0);
+            assert.equal(summaries.length, 0);
+        } else {
+            assert.deepEqual(batchSizes, [400, 400, 1]);
+            assert.equal(result.imported, 801);
+            for (const count of [0, 400, 800, 801]) assert.ok(summaries.some(text => text.includes(`${count} / 801`)));
+            assert.match(message, /已匯入 801 筆/);
+        }
+    }
+}
+
+Promise.all([...['success', 'failure', 'cancel'].map(check),
+    ...['success', 'cancel', 'first-failure', 'partial-failure', 'offline'].map(checkBatches)])
+    .then(() => console.log('Online import checks passed (locks, duplicate submits, batch progress, partial failures and offline interruption).'))
     .catch(error => { console.error(error); process.exitCode = 1; });

@@ -697,15 +697,24 @@ async function importJsonBackup(file) {
     return { total, imported: 0, skipped, cancelled: true };
   }
 
-  for (let offset = 0; offset < unique.length; offset += 400) {
-    if (!syncReady) {
-      throw new Error("正在同步授權資料，匯入已暫停，請確認連線後再試。");
+  let importedCount = 0;
+  setImportSummary(`正在匯入：已確認 ${importedCount} / ${unique.length} 筆，請勿關閉頁面…`);
+  try {
+    for (let offset = 0; offset < unique.length; offset += 400) {
+      if (!syncReady) {
+        throw new Error("連線尚未就緒，已停止後續匯入。");
+      }
+      const batch = writeBatch(db);
+      const records = unique.slice(offset, offset + 400);
+      records.forEach((record) => {
+        batch.set(doc(collection(db, "licenses")), record);
+      });
+      await batch.commit();
+      importedCount += records.length;
+      setImportSummary(`正在匯入：已確認 ${importedCount} / ${unique.length} 筆，請勿關閉頁面…`);
     }
-    const batch = writeBatch(db);
-    unique.slice(offset, offset + 400).forEach((record) => {
-      batch.set(doc(collection(db, "licenses")), record);
-    });
-    await batch.commit();
+  } catch (error) {
+    throw new Error(`已確認成功匯入 ${importedCount} / ${unique.length} 筆。${formatFirebaseError(error)} 請等待同步完成並核對清單，再重新選擇備份檢查差異；已存在的相同資料會跳過。`);
   }
   setMessage(licenseMessage, `已匯入 ${unique.length} 筆授權資料${unknownDateText}${skippedText}。`, true);
   return { total, imported: unique.length, skipped, unknownDateCount };
