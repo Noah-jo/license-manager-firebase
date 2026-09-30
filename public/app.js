@@ -47,6 +47,7 @@ const settingsForm = $("settings-form");
 const settingsMessage = $("settings-message");
 const connectionDot = $("connection-dot");
 const currentUser = $("current-user");
+const retrySyncButton = $("retry-sync");
 const jsonImportSummary = $("json-import-summary");
 const importJsonSubmit = $("import-json-submit");
 const saveLicenseButton = licenseForm.querySelector(".save-button");
@@ -79,6 +80,9 @@ function setConnectionState(state, label, title = label) {
   connectionDot.dataset.state = state;
   connectionDot.title = title;
   currentUser.textContent = label;
+  const retryable = state === "error" || state === "offline";
+  retrySyncButton.classList.toggle("hidden", !retryable);
+  retrySyncButton.disabled = !retryable;
 }
 
 function setSyncAvailability(ready) {
@@ -724,6 +728,10 @@ $("logout").addEventListener("click", () => {
   state.licenseUnsubscribe = null;
   setConnectionState("checking", "已鎖定", "已登出");
   showOnly("auth");
+});
+
+retrySyncButton.addEventListener("click", () => {
+  if (state.unlocked) startLicenseListener();
 });
 
 window.addEventListener("offline", () => {
