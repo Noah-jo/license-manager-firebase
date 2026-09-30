@@ -47,6 +47,8 @@ required_js = {
     "setSyncAvailability": "write safety while Firebase sync is pending",
     "retrySyncButton": "recoverable sync error flow",
     "licenseTable.setAttribute": "announced table sync state",
+    "duplicateLicense": "duplicate-to-new flow",
+    "data-duplicate": "duplicate row action",
     "snapshot.metadata.fromCache": "cache-only sync safety",
     "empty-action": "empty-state add action",
     "data-empty-clear": "empty-state filter reset action",

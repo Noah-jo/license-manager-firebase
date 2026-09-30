@@ -374,6 +374,7 @@ function renderLicenses() {
         <td>
           <div class="row-actions">
             <button type="button" class="secondary" data-edit="${item.id}" aria-label="編輯 ${itemName}">編輯</button>
+            <button type="button" class="secondary" data-duplicate="${item.id}" aria-label="複製 ${itemName}">複製</button>
             <button type="button" class="danger" data-delete="${item.id}" aria-label="刪除 ${itemName}"${deleteDisabled}>刪除</button>
           </div>
         </td>
@@ -440,6 +441,27 @@ function editLicense(id) {
   $("remarks").value = item.remarks || "";
   formTitle.textContent = "編輯授權";
   cancelEdit.classList.remove("hidden");
+  document.querySelector(".editor").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function duplicateLicense(id) {
+  const item = state.licenses.find((license) => license.id === id);
+  if (!item) return;
+  licenseId.value = "";
+  expiryField.required = true;
+  expiryRequiredMark.hidden = false;
+  $("name").value = String(item.name ?? "");
+  $("seats").value = String(item.seats ?? "");
+  $("expiry").value = String(item.expiry ?? "");
+  $("payment-method").value = String(item.paymentMethod ?? "");
+  $("price").value = item.price ?? "";
+  $("pic").value = String(item.pic ?? "");
+  $("user").value = String(item.user ?? "");
+  $("sub-link").value = String(item.subLink ?? "");
+  $("remarks").value = String(item.remarks ?? "");
+  formTitle.textContent = "複製授權";
+  cancelEdit.classList.remove("hidden");
+  setMessage(licenseMessage, "已帶入資料，修改後可另存新授權。", true);
   document.querySelector(".editor").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -799,8 +821,10 @@ licensesBody.addEventListener("click", async (event) => {
     return;
   }
   const editId = event.target.dataset.edit;
+  const duplicateId = event.target.dataset.duplicate;
   const deleteId = event.target.dataset.delete;
   if (editId) editLicense(editId);
+  if (duplicateId) duplicateLicense(duplicateId);
   if (deleteId) {
     if (!syncReady) {
       setMessage(licenseMessage, "正在同步授權資料，請稍候再刪除。");
