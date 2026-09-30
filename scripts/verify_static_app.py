@@ -59,6 +59,7 @@ required_js = {
     "正在同步授權資料，請稍候再匯入": "import write safety",
     "正在同步授權資料，匯入已暫停": "import batch write safety",
     "正在同步授權資料，請稍候再匯出": "export read safety",
+    "JSON 格式不正確，請選擇有效的 JSON 備份檔": "friendly online JSON parse error",
 }
 forbidden_auth = {
     "firebase-auth.js": "Firebase Auth module",

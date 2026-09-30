@@ -128,6 +128,9 @@ async function ensurePasswordDoc() {
 }
 
 function formatFirebaseError(error) {
+  if (error instanceof SyntaxError) {
+    return "JSON 格式不正確，請選擇有效的 JSON 備份檔。";
+  }
   const code = error?.code || "";
   if (code.includes("permission-denied")) return "Firebase 權限不足，請確認 Firestore Rules 已部署。";
   return error?.message || "操作失敗。";
