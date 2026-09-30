@@ -74,23 +74,49 @@ function showOnly(screen) {
   appScreen.classList.toggle("hidden", screen !== "app");
 }
 
+function getViewStorages() {
+  const storages = [];
+  for (const name of ["sessionStorage", "localStorage"]) {
+    try {
+      const storage = window[name];
+      if (storage) storages.push(storage);
+    } catch {
+      // Ignore unavailable browser storage.
+    }
+  }
+  return storages;
+}
+
 function saveViewState() {
-  try {
-    sessionStorage.setItem(VIEW_STATE_KEY, JSON.stringify({
-      search: $("search").value,
-      status: $("status-filter").value,
-      expiringDays: $("expiring-days").value,
-      sortKey: sortState.key,
-      sortDirection: sortState.direction
-    }));
-  } catch {
-    // Private browsing settings may disable sessionStorage; the app still works.
+  const serialized = JSON.stringify({
+    search: $("search").value,
+    status: $("status-filter").value,
+    expiringDays: $("expiring-days").value,
+    sortKey: sortState.key,
+    sortDirection: sortState.direction
+  });
+  for (const storage of getViewStorages()) {
+    try {
+      storage.setItem(VIEW_STATE_KEY, serialized);
+    } catch {
+      // Continue with the next browser storage option.
+    }
   }
 }
 
 function restoreViewState() {
+  let raw = null;
+  const storages = getViewStorages();
+  for (const storage of storages) {
+    try {
+      raw = storage.getItem(VIEW_STATE_KEY);
+      if (raw) break;
+    } catch {
+      // Ignore unavailable browser storage.
+    }
+  }
   try {
-    const saved = JSON.parse(sessionStorage.getItem(VIEW_STATE_KEY) || "null");
+    const saved = JSON.parse(raw || "null");
     if (!saved || typeof saved !== "object") return;
     if (typeof saved.search === "string") $("search").value = saved.search;
     if (["all", "expired", "expiring", "active"].includes(saved.status)) {
@@ -103,10 +129,12 @@ function restoreViewState() {
     if (VIEW_SORT_KEYS.has(saved.sortKey)) sortState.key = saved.sortKey;
     if (["asc", "desc"].includes(saved.sortDirection)) sortState.direction = saved.sortDirection;
   } catch {
-    try {
-      sessionStorage.removeItem(VIEW_STATE_KEY);
-    } catch {
-      // Ignore unavailable session storage.
+    for (const storage of storages) {
+      try {
+        storage.removeItem(VIEW_STATE_KEY);
+      } catch {
+        // Ignore unavailable browser storage.
+      }
     }
   }
 }
