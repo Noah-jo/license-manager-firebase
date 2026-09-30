@@ -659,8 +659,22 @@ function getImportedRecords(parsed) {
   };
 }
 
+async function readJsonBackup(file) {
+  let content;
+  try {
+    content = await file.text();
+  } catch (error) {
+    throw new Error("無法讀取備份檔案，請重新選擇檔案後再試。");
+  }
+  try {
+    return JSON.parse(content.replace(/^\uFEFF/, ""));
+  } catch (error) {
+    throw new Error("JSON 格式不正確，請選擇有效的 UTF-8 JSON 備份檔。");
+  }
+}
+
 async function previewJsonBackup(file) {
-  const parsed = JSON.parse(await file.text());
+  const parsed = await readJsonBackup(file);
   return getImportedRecords(parsed);
 }
 
@@ -668,7 +682,7 @@ async function importJsonBackup(file) {
   if (!syncReady) {
     throw new Error("正在同步授權資料，請稍候再匯入。");
   }
-  const parsed = JSON.parse(await file.text());
+  const parsed = await readJsonBackup(file);
   const { total, unique, skipped, unknownDateCount } = getImportedRecords(parsed);
 
   if (!unique.length) {
@@ -1063,6 +1077,7 @@ jsonImport.addEventListener("change", async (event) => {
     importJsonSubmit.disabled = !syncReady || result.unique.length === 0;
   } catch (error) {
     if (requestId !== importRequestId) return;
+    jsonImport.value = "";
     setImportSummary(`檢查失敗：${formatFirebaseError(error)}`, true);
   }
 });
