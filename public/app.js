@@ -123,7 +123,7 @@ function restoreViewState() {
     const saved = JSON.parse(raw || "null");
     if (!saved || typeof saved !== "object") return;
     if (typeof saved.search === "string") $("search").value = saved.search;
-    if (["all", "expired", "expiring", "active"].includes(saved.status)) {
+    if (["all", "expired", "expiring", "active", "unknown"].includes(saved.status)) {
       $("status-filter").value = saved.status;
     }
     const expiringDays = Number(saved.expiringDays);
@@ -283,6 +283,7 @@ function getFilteredLicenses() {
     if (filters.status === "expired" && status.type !== "expired") return false;
     if (filters.status === "expiring" && status.type !== "expiring") return false;
     if (filters.status === "active" && status.type !== "active") return false;
+    if (filters.status === "unknown" && status.type !== "unknown") return false;
     return true;
   });
 }
