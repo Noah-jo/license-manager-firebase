@@ -20,7 +20,7 @@ const context = vm.createContext({
   getStatus: () => ({ label: 'Active', daysLeft: 10 }),
   downloadFile: (filename, content, type) => { output = { filename, content, type }; }
 });
-vm.runInContext(section('function sortValue(', 'function sortLicensesByExpiry(')
+vm.runInContext(section('function storedPrice(', 'function sortLicensesByExpiry(')
   + section('function escapeHtml(', 'function safeHttpUrl(')
   + section('function csvEscape(', 'function importTextValue(')
   + section('function excelCellText(', 'function exportJsonBackup('), context);
@@ -66,3 +66,48 @@ output = null;
 context.exportJsonBackup();
 assert.equal(output, null, 'Unsynchronized data must not be downloaded as a complete backup');
 console.log('JSON backup checks passed (raw legacy links retained, multiline text and sync gate).');
+
+context.syncReady = true;
+const priceFields = {};
+context.$ = (id) => priceFields[id] ??= {};
+context.getStatus = () => ({ type: 'active', label: 'Active', daysLeft: 10 });
+vm.runInContext(section('function renderStats(', 'function renderLicenses('), context);
+for (const invalid of ['broken', -1, Infinity, -Infinity, NaN, true, {}, []]) {
+  assert.equal(context.storedPrice(invalid), null);
+  context.renderStats([{ price: invalid }, { price: 12.5 }]);
+  assert.equal(priceFields['stat-total-price'].textContent, '12.50');
+  assert.match(priceFields['stat-price-note'].textContent, /未計入 1 筆異常價格/);
+  context.state.licenses = [{ name: 'Invalid', seats: '1', price: invalid }];
+  context.exportJsonBackup();
+  const restored = JSON.parse(output.content)[0].price;
+  assert.deepEqual(restored, typeof invalid === 'number' && !Number.isFinite(invalid) ? String(invalid) : invalid);
+}
+context.renderStats([{ price: 0 }, { price: '12.50' }, {}]);
+assert.equal(priceFields['stat-total-price'].textContent, '12.50');
+assert.equal(priceFields['stat-price-note'].textContent, '目前篩選結果');
+context.getFilteredLicenses = () => [{ name: 'Invalid', seats: '1', price: '=SUM(1,2)' }, { name: 'Valid', seats: '1', price: 12.5 }];
+context.exportRows('csv');
+assert.ok(output.content.includes("'=SUM(1,2)"));
+context.exportRows('excel');
+assert.ok(output.content.includes('&#039;=SUM(1,2)'));
+context.sortState = { key: 'price', direction: 'asc' };
+const priceRecords = [{ name: 'Broken B', price: 'bad' }, { name: 'Valid', price: 12.5 }, { name: 'Broken A', price: -1 }];
+assert.deepEqual(Array.from(context.sortVisibleLicenses(priceRecords), item => item.name), ['Valid', 'Broken A', 'Broken B']);
+context.sortState.direction = 'desc';
+assert.deepEqual(Array.from(context.sortVisibleLicenses(priceRecords), item => item.name), ['Broken A', 'Broken B', 'Valid']);
+console.log('Legacy price checks passed (finite totals, explicit warnings, raw JSON, safe exports and deterministic sorting).');
+context.licenseTable = { setAttribute() {} };
+context.licensesBody = { innerHTML: '' };
+context.updateStatFilterStates = () => {};
+context.safeHttpUrl = () => '';
+context.state = { licenseLoaded: true, licenses: [{ id: 'bad', name: 'Legacy', seats: '1', expiry: '', price: '<broken>"' }] };
+context.getFilteredLicenses = () => context.state.licenses;
+vm.runInContext(section('function renderLicenses(', 'function refreshLicenseTextValidity('), context);
+context.renderLicenses();
+assert.ok(context.licensesBody.innerHTML.includes('價格異常'));
+assert.ok(context.licensesBody.innerHTML.includes('&lt;broken&gt;&quot;'));
+assert.ok(!context.licensesBody.innerHTML.includes('<broken>'));
+context.state.licenseLoaded = false;
+context.renderLicenses();
+assert.equal(priceFields['stat-price-note'].textContent, '等待同步');
+console.log('Legacy price rendering checks passed (escaped original values and cleared stale totals).');

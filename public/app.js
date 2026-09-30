@@ -302,9 +302,21 @@ function licenseRecordKey(item) {
   ].join("\u001f");
 }
 
+function storedPrice(value) {
+  if (value == null || value === "") return 0;
+  if (!["number", "string"].includes(typeof value)) return null;
+  const price = Number(value);
+  return Number.isFinite(price) && price >= 0 ? price : null;
+}
+
+function priceExportText(value) {
+  const price = storedPrice(value);
+  return price === null ? spreadsheetSafeText(String(value)) : price.toFixed(2);
+}
+
 function sortValue(item, key) {
   if (key === "status") return getStatus(item, getFilters().expiringDays).daysLeft ?? Number.POSITIVE_INFINITY;
-  if (key === "price") return Number(item.price || 0);
+  if (key === "price") return storedPrice(item.price) ?? Number.POSITIVE_INFINITY;
   if (key === "expiry") return isValidDateText(item.expiry) ? item.expiry : "9999-12-31";
   return String(item[key] ?? "").trim().toLocaleLowerCase("zh-Hant");
 }
@@ -386,12 +398,15 @@ function renderStats(visible) {
   const filters = getFilters();
   const expired = visible.filter((item) => getStatus(item, filters.expiringDays).type === "expired").length;
   const expiring = visible.filter((item) => getStatus(item, filters.expiringDays).type === "expiring").length;
-  const totalPrice = visible.reduce((sum, item) => sum + Number(item.price || 0), 0);
+  const totalPrice = visible.reduce((sum, item) => sum + (storedPrice(item.price) ?? 0), 0);
+  const invalidPriceCount = visible.filter((item) => storedPrice(item.price) === null).length;
 
   $("stat-total").textContent = visible.length;
   $("stat-expired").textContent = expired;
   $("stat-expiring").textContent = expiring;
   $("stat-total-price").textContent = totalPrice.toFixed(2);
+  $("stat-price-note").textContent = invalidPriceCount
+    ? `未計入 ${invalidPriceCount} 筆異常價格，請編輯修正` : "目前篩選結果";
   $("visible-count").textContent = `${visible.length} 項結果`;
 }
 
@@ -402,6 +417,7 @@ function renderLicenses() {
     $("stat-expired").textContent = "—";
     $("stat-expiring").textContent = "—";
     $("stat-total-price").textContent = "—";
+    $("stat-price-note").textContent = "等待同步";
     $("visible-count").textContent = "同步中";
     licensesBody.innerHTML = `
       <tr><td colspan="11" class="empty-row loading-row">
@@ -445,7 +461,7 @@ function renderLicenses() {
         <td>${escapeHtml(item.seats)}</td>
         <td>${escapeHtml(item.expiry)}</td>
         <td><span class="status ${status.type}">${escapeHtml(status.label)}</span></td>
-        <td>${Number(item.price || 0).toFixed(2)}</td>
+        <td>${storedPrice(item.price) === null ? `<span class="status unknown" title="原值：${escapeHtml(String(item.price))}；請編輯修正">價格異常</span>` : storedPrice(item.price).toFixed(2)}</td>
         <td>${escapeHtml(item.paymentMethod || "-")}</td>
         <td>${escapeHtml(item.pic || "-")}</td>
         <td>${escapeHtml(item.user || "-")}</td>
@@ -510,6 +526,7 @@ function resetLicenseForm() {
   formTitle.textContent = "新增授權";
   expiryField.required = true;
   expiryRequiredMark.hidden = false;
+  $("price").required = false;
   cancelEdit.classList.add("hidden");
   licenseFormBaseline = snapshotLicenseForm();
 }
@@ -521,6 +538,9 @@ function hasDuplicateLicense(record, ignoreId = "") {
 
 function readLicenseForm() {
   const rawPrice = $("price").value.trim();
+  if ($("price").required && !rawPrice) {
+    throw new Error("原有價格異常，請填寫有效價格後再儲存；免費授權請填 0。");
+  }
   const price = rawPrice === "" ? 0 : Number(rawPrice);
   if (!Number.isFinite(price) || price < 0) {
     throw new Error("價格必須是 0 或以上的有限數字。");
@@ -545,6 +565,13 @@ function readLicenseForm() {
   };
 }
 
+function loadPriceField(item) {
+  const valid = storedPrice(item.price) !== null;
+  $("price").value = valid ? (item.price ?? "") : "";
+  $("price").required = !valid;
+  setMessage(licenseMessage, valid ? "" : `原有價格異常（原值：${String(item.price)}），請重新填寫；免費授權請填 0。`);
+}
+
 function editLicense(id) {
   const item = state.licenses.find((license) => license.id === id);
   if (!item) return;
@@ -557,7 +584,7 @@ function editLicense(id) {
   $("seats").value = item.seats || "";
   $("expiry").value = item.expiry || "";
   $("payment-method").value = item.paymentMethod || "";
-  $("price").value = item.price || "";
+  loadPriceField(item);
   $("pic").value = item.pic || "";
   $("user").value = item.user || "";
   $("sub-link").value = item.subLink || "";
@@ -580,7 +607,7 @@ function duplicateLicense(id) {
   $("seats").value = String(item.seats ?? "");
   $("expiry").value = String(item.expiry ?? "");
   $("payment-method").value = String(item.paymentMethod ?? "");
-  $("price").value = item.price ?? "";
+  loadPriceField(item);
   $("pic").value = String(item.pic ?? "");
   $("user").value = String(item.user ?? "");
   $("sub-link").value = String(item.subLink ?? "");
@@ -589,7 +616,7 @@ function duplicateLicense(id) {
   formTitle.textContent = "複製授權";
   licenseFormBaseline = emptyLicenseFormSnapshot;
   cancelEdit.classList.remove("hidden");
-  setMessage(licenseMessage, "已帶入資料，修改後可另存新授權。", true);
+  if (storedPrice(item.price) !== null) setMessage(licenseMessage, "已帶入資料，修改後可另存新授權。", true);
   document.querySelector(".editor").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -775,7 +802,7 @@ function exportRows(format) {
       item.expiry,
       status.label,
       status.daysLeft ?? "",
-      Number(item.price || 0).toFixed(2),
+      priceExportText(item.price),
       spreadsheetSafeText(item.paymentMethod),
       spreadsheetSafeText(item.pic),
       spreadsheetSafeText(item.user),
@@ -808,7 +835,7 @@ function exportJsonBackup() {
     seats: item.seats || "",
     expiry: item.expiry || "",
     paymentMethod: item.paymentMethod || "",
-    price: Number(item.price || 0),
+    price: typeof item.price === "number" && !Number.isFinite(item.price) ? String(item.price) : (item.price ?? 0),
     pic: item.pic || "",
     user: item.user || "",
     // Backups preserve stored text; link safety belongs to rendering and input validation.
