@@ -266,6 +266,7 @@ function updateStatFilterStates(status) {
 
 function getFilteredLicenses() {
   const filters = getFilters();
+  const searchTerms = filters.search.split(/\s+/).filter(Boolean);
   return state.licenses.filter((item) => {
     const status = getStatus(item, filters.expiringDays);
     const haystack = [
@@ -278,7 +279,7 @@ function getFilteredLicenses() {
       item.remarks
     ].join(" ").toLowerCase();
 
-    if (filters.search && !haystack.includes(filters.search)) return false;
+    if (!searchTerms.every((term) => haystack.includes(term))) return false;
     if (filters.status === "expired" && status.type !== "expired") return false;
     if (filters.status === "expiring" && status.type !== "expiring") return false;
     if (filters.status === "active" && status.type !== "active") return false;
