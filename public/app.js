@@ -336,6 +336,10 @@ function sortLicensesByExpiry(licenses) {
 function updateSortIndicators() {
   document.querySelectorAll(".sort-button").forEach((button) => {
     const active = button.dataset.sortKey === sortState.key;
+    if (active) {
+      const summary = $("list-sort-summary");
+      if (summary) summary.textContent = `按${button.textContent.replace(/[↕↑↓]/g, "").trim()}${sortState.direction === "asc" ? "遞增" : "遞減"}排序；點擊欄位名稱可切換`;
+    }
     const header = button.closest("th");
     const indicator = button.querySelector(".sort-indicator");
     header?.setAttribute("aria-sort", active ? (sortState.direction === "asc" ? "ascending" : "descending") : "none");
