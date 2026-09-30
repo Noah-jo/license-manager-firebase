@@ -62,6 +62,8 @@ let pendingJsonFile = null;
 let pendingImportCount = 0;
 let importRequestId = 0;
 let syncReady = false;
+const emptyLicenseFormSnapshot = snapshotLicenseForm();
+let licenseFormBaseline = emptyLicenseFormSnapshot;
 
 $("today-date").textContent = new Intl.DateTimeFormat("zh-HK", {
   year: "numeric",
@@ -452,6 +454,25 @@ function renderLicenses() {
   }).join("");
 }
 
+function snapshotLicenseForm() {
+  return JSON.stringify(["name", "seats", "expiry", "payment-method", "price", "pic", "user", "sub-link", "remarks"]
+    .map((id) => [id, $(id).value]));
+}
+
+function hasUnsavedLicenseForm() {
+  return snapshotLicenseForm() !== licenseFormBaseline;
+}
+
+function confirmDiscardLicenseForm() {
+  return !hasUnsavedLicenseForm() || window.confirm("目前表單有未儲存的資料。確定要放棄這些變更嗎？");
+}
+
+window.addEventListener("beforeunload", (event) => {
+  if (!state.unlocked || !hasUnsavedLicenseForm()) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
+
 function resetLicenseForm() {
   licenseForm.reset();
   licenseId.value = "";
@@ -459,6 +480,7 @@ function resetLicenseForm() {
   expiryField.required = true;
   expiryRequiredMark.hidden = false;
   cancelEdit.classList.add("hidden");
+  licenseFormBaseline = snapshotLicenseForm();
 }
 
 function hasDuplicateLicense(record, ignoreId = "") {
@@ -495,6 +517,7 @@ function readLicenseForm() {
 function editLicense(id) {
   const item = state.licenses.find((license) => license.id === id);
   if (!item) return;
+  if (!confirmDiscardLicenseForm()) return;
   licenseId.value = item.id;
   const allowBlankExpiry = !item.expiry;
   expiryField.required = !allowBlankExpiry;
@@ -510,12 +533,14 @@ function editLicense(id) {
   $("remarks").value = item.remarks || "";
   formTitle.textContent = "編輯授權";
   cancelEdit.classList.remove("hidden");
+  licenseFormBaseline = snapshotLicenseForm();
   document.querySelector(".editor").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function duplicateLicense(id) {
   const item = state.licenses.find((license) => license.id === id);
   if (!item) return;
+  if (!confirmDiscardLicenseForm()) return;
   licenseId.value = "";
   expiryField.required = true;
   expiryRequiredMark.hidden = false;
@@ -529,6 +554,7 @@ function duplicateLicense(id) {
   $("sub-link").value = String(item.subLink ?? "");
   $("remarks").value = String(item.remarks ?? "");
   formTitle.textContent = "複製授權";
+  licenseFormBaseline = emptyLicenseFormSnapshot;
   cancelEdit.classList.remove("hidden");
   setMessage(licenseMessage, "已帶入資料，修改後可另存新授權。", true);
   document.querySelector(".editor").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -814,6 +840,8 @@ togglePassword.addEventListener("click", () => {
 });
 
 $("logout").addEventListener("click", () => {
+  if (!confirmDiscardLicenseForm()) return;
+  resetLicenseForm();
   state.unlocked = false;
   setSyncAvailability(false);
   sessionStorage.removeItem("licenseManagerUnlocked");
@@ -879,7 +907,9 @@ licenseForm.addEventListener("submit", async (event) => {
   }
 });
 
-cancelEdit.addEventListener("click", resetLicenseForm);
+cancelEdit.addEventListener("click", () => {
+  if (confirmDiscardLicenseForm()) resetLicenseForm();
+});
 
 licensesBody.addEventListener("click", async (event) => {
   if (event.target.dataset.emptyClear !== undefined) {
