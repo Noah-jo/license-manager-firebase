@@ -755,7 +755,7 @@ function exportRows(format) {
     return;
   }
   const filters = getFilters();
-  const rows = getFilteredLicenses().map((item) => {
+  const rows = sortVisibleLicenses(getFilteredLicenses()).map((item) => {
     const status = getStatus(item, filters.expiringDays);
     return [
       spreadsheetSafeText(item.name),
