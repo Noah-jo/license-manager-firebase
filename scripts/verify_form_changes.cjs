@@ -22,10 +22,11 @@ const context = vm.createContext({
 });
 const helpersStart = source.indexOf('function refreshLicenseTextValidity()');
 const helpersEnd = source.indexOf('function hasDuplicateLicense(', helpersStart);
-const actionsStart = source.indexOf('function loadPriceField(');
+const actionsStart = source.indexOf('function loadPriceAndDateWarnings(');
 const actionsEnd = source.indexOf('function csvEscape(', actionsStart);
 assert.ok(helpersStart >= 0 && helpersEnd > helpersStart && actionsStart >= 0 && actionsEnd > actionsStart);
 vm.runInContext(source.slice(source.indexOf('function storedPrice('), source.indexOf('function sortValue(')) + source.slice(helpersStart, helpersEnd) + source.slice(actionsStart, actionsEnd), context);
+vm.runInContext(source.slice(source.indexOf('function isValidDateText('), source.indexOf('function getStatus(')), context);
 vm.runInContext('let licenseSavePending = false; const emptyLicenseFormSnapshot = snapshotLicenseForm(); let licenseFormBaseline = emptyLicenseFormSnapshot;', context);
 let inputHandler;
 context.licenseForm.addEventListener = (_, handler) => { inputHandler = handler; };
@@ -103,7 +104,7 @@ assert.equal(fields.price.value, '');
 assert.equal(fields.price.required, true);
 assert.match(priceMessage, /原值：bad/);
 const formReadStart = source.indexOf('function readLicenseForm(');
-vm.runInContext(source.slice(formReadStart, source.indexOf('function loadPriceField(', formReadStart)), context);
+vm.runInContext(source.slice(formReadStart, source.indexOf('function loadPriceAndDateWarnings(', formReadStart)), context);
 context.safeHttpUrl = value => value;
 context.serverTimestamp = () => null;
 assert.throws(() => context.readLicenseForm(), /原有價格異常/);
@@ -115,6 +116,24 @@ context.duplicateLicense('broken');
 assert.equal(fields.price.required, true);
 assert.match(priceMessage, /原有價格異常/, 'Copy instructions must not hide the price correction warning');
 context.resetLicenseForm();
+for (const expiry of ['not-a-date', '2030-02-30', '<broken>']) {
+  const legacy = context.state.licenses.find(item => item.id === 'broken');
+  legacy.expiry = expiry;
+  context.editLicense('broken');
+  assert.ok(priceMessage.includes(`原值：${expiry}`));
+  assert.match(priceMessage, /原有價格異常/, 'Date warning must not hide the price warning');
+  assert.equal(fields.expiry.required, true);
+  context.resetLicenseForm();
+  context.duplicateLicense('broken');
+  assert.ok(priceMessage.includes(`原值：${expiry}`), 'Copy instructions must preserve the date warning');
+  context.resetLicenseForm();
+}
+context.state.licenses.find(item => item.id === 'broken').expiry = '';
+context.editLicense('broken');
+assert.equal(fields.expiry.required, false, 'Empty legacy dates remain optional when editing');
+assert.ok(!priceMessage.includes('原日期異常'));
+context.resetLicenseForm();
+console.log('Legacy date correction checks passed (original values, simultaneous warnings, copying and optional blank dates).');
 console.log('Online unsaved form checks passed (switching, copying, leave and reset).');
 
 async function verifyPendingWrites() {

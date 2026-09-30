@@ -565,11 +565,14 @@ function readLicenseForm() {
   };
 }
 
-function loadPriceField(item) {
+function loadPriceAndDateWarnings(item) {
   const valid = storedPrice(item.price) !== null;
   $("price").value = valid ? (item.price ?? "") : "";
   $("price").required = !valid;
-  setMessage(licenseMessage, valid ? "" : `原有價格異常（原值：${String(item.price)}），請重新填寫；免費授權請填 0。`);
+  const warnings = [];
+  if (!valid) warnings.push(`原有價格異常（原值：${String(item.price)}），請重新填寫；免費授權請填 0。`);
+  if (item.expiry && !isValidDateText(item.expiry)) warnings.push(`原日期異常（原值：${String(item.expiry)}），請重新選擇有效日期。`);
+  setMessage(licenseMessage, warnings.join(" "));
 }
 
 function editLicense(id) {
@@ -584,7 +587,7 @@ function editLicense(id) {
   $("seats").value = item.seats || "";
   $("expiry").value = item.expiry || "";
   $("payment-method").value = item.paymentMethod || "";
-  loadPriceField(item);
+  loadPriceAndDateWarnings(item);
   $("pic").value = item.pic || "";
   $("user").value = item.user || "";
   $("sub-link").value = item.subLink || "";
@@ -607,7 +610,7 @@ function duplicateLicense(id) {
   $("seats").value = String(item.seats ?? "");
   $("expiry").value = String(item.expiry ?? "");
   $("payment-method").value = String(item.paymentMethod ?? "");
-  loadPriceField(item);
+  loadPriceAndDateWarnings(item);
   $("pic").value = String(item.pic ?? "");
   $("user").value = String(item.user ?? "");
   $("sub-link").value = String(item.subLink ?? "");
@@ -616,7 +619,7 @@ function duplicateLicense(id) {
   formTitle.textContent = "複製授權";
   licenseFormBaseline = emptyLicenseFormSnapshot;
   cancelEdit.classList.remove("hidden");
-  if (storedPrice(item.price) !== null) setMessage(licenseMessage, "已帶入資料，修改後可另存新授權。", true);
+  if (storedPrice(item.price) !== null && (!item.expiry || isValidDateText(item.expiry))) setMessage(licenseMessage, "已帶入資料，修改後可另存新授權。", true);
   document.querySelector(".editor").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
