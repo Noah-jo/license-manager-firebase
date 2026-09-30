@@ -56,6 +56,8 @@ const settingsSaveButton = settingsForm.querySelector("button[type=\"submit\"]")
 const syncBoundControls = [$("export-csv"), $("export-excel"), $("export-json"), jsonImport, settingsSaveButton];
 const jsonImportLabel = $("json-import-label");
 const sortState = { key: "expiry", direction: "asc" };
+const VIEW_STATE_KEY = "licenseManagerViewState";
+const VIEW_SORT_KEYS = new Set(["name", "seats", "expiry", "status", "price", "paymentMethod", "pic", "user"]);
 let pendingJsonFile = null;
 let pendingImportCount = 0;
 let importRequestId = 0;
@@ -70,6 +72,43 @@ $("today-date").textContent = new Intl.DateTimeFormat("zh-HK", {
 function showOnly(screen) {
   authScreen.classList.toggle("hidden", screen !== "auth");
   appScreen.classList.toggle("hidden", screen !== "app");
+}
+
+function saveViewState() {
+  try {
+    sessionStorage.setItem(VIEW_STATE_KEY, JSON.stringify({
+      search: $("search").value,
+      status: $("status-filter").value,
+      expiringDays: $("expiring-days").value,
+      sortKey: sortState.key,
+      sortDirection: sortState.direction
+    }));
+  } catch {
+    // Private browsing settings may disable sessionStorage; the app still works.
+  }
+}
+
+function restoreViewState() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(VIEW_STATE_KEY) || "null");
+    if (!saved || typeof saved !== "object") return;
+    if (typeof saved.search === "string") $("search").value = saved.search;
+    if (["all", "expired", "expiring", "active"].includes(saved.status)) {
+      $("status-filter").value = saved.status;
+    }
+    const expiringDays = Number(saved.expiringDays);
+    if (Number.isFinite(expiringDays) && expiringDays >= 1) {
+      $("expiring-days").value = String(Math.max(1, Math.floor(expiringDays)));
+    }
+    if (VIEW_SORT_KEYS.has(saved.sortKey)) sortState.key = saved.sortKey;
+    if (["asc", "desc"].includes(saved.sortDirection)) sortState.direction = saved.sortDirection;
+  } catch {
+    try {
+      sessionStorage.removeItem(VIEW_STATE_KEY);
+    } catch {
+      // Ignore unavailable session storage.
+    }
+  }
 }
 
 function setMessage(element, message = "", success = false) {
@@ -278,6 +317,7 @@ function sortLicenses(key) {
     sortState.key = key;
     sortState.direction = "asc";
   }
+  saveViewState();
   updateSortIndicators();
   renderLicenses();
 }
@@ -817,6 +857,7 @@ licensesBody.addEventListener("click", async (event) => {
     $("search").value = "";
     $("status-filter").value = "all";
     $("expiring-days").value = "30";
+    saveViewState();
     renderLicenses();
     return;
   }
@@ -879,10 +920,14 @@ settingsForm.addEventListener("submit", async (event) => {
 });
 
 ["search", "status-filter", "expiring-days"].forEach((id) => {
-  $(id).addEventListener("input", renderLicenses);
+  $(id).addEventListener("input", () => {
+    saveViewState();
+    renderLicenses();
+  });
 });
 $("expiring-days").addEventListener("change", () => {
   normalizeExpiringDaysInput();
+  saveViewState();
   renderLicenses();
 });
 
@@ -892,6 +937,7 @@ document.querySelectorAll(".sort-button").forEach((button) => {
 document.querySelectorAll("[data-stat-filter]").forEach((button) => {
   button.addEventListener("click", () => {
     $("status-filter").value = button.dataset.statFilter;
+    saveViewState();
     renderLicenses();
     requestAnimationFrame(() => $("license-list").scrollIntoView({ behavior: "smooth", block: "start" }));
   });
@@ -900,8 +946,10 @@ $("clear-filters").addEventListener("click", () => {
   $("search").value = "";
   $("status-filter").value = "all";
   $("expiring-days").value = "30";
+  saveViewState();
   renderLicenses();
 });
+restoreViewState();
 updateSortIndicators();
 setSyncAvailability(false);
 renderLicenses();
