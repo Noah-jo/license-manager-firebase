@@ -558,7 +558,7 @@ function normalizeImportedLicense(item, index) {
   const seats = importTextValue(item?.seats, index, "數量");
   const expiry = importTextValue(item?.expiry, index, "到期日期");
   const rawPrice = item?.price;
-  if (rawPrice != null && typeof rawPrice === "object") {
+  if (rawPrice != null && !["number", "string"].includes(typeof rawPrice)) {
     throw new Error(`第 ${index + 1} 筆資料的價格無效。`);
   }
   const price = rawPrice === "" || rawPrice == null ? 0 : Number(rawPrice);
