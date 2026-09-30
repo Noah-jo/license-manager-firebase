@@ -484,7 +484,7 @@ function setLicenseSavePending(pending) {
 }
 
 window.addEventListener("beforeunload", (event) => {
-  if (!state.unlocked || (!licenseSavePending && !hasUnsavedLicenseForm())) return;
+  if (!state.unlocked || (!licenseSavePending && !jsonImportPending && !hasUnsavedLicenseForm())) return;
   event.preventDefault();
   event.returnValue = "";
 });
@@ -874,6 +874,10 @@ togglePassword.addEventListener("click", () => {
 });
 
 $("logout").addEventListener("click", () => {
+  if (jsonImportPending) {
+    setImportSummary("正在匯入授權，請等待處理結束後再登出。", true);
+    return;
+  }
   if (!confirmDiscardLicenseForm()) return;
   resetLicenseForm();
   state.unlocked = false;

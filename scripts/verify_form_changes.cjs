@@ -14,6 +14,7 @@ const context = vm.createContext({
   cancelEdit: { classList: { add() {}, remove() {} } },
   licenseForm: { reset() { Object.values(fields).forEach((field) => { field.value = ''; }); }, setAttribute() {} },
   saveLicenseButton: {}, syncReady: true,
+  jsonImportPending: false,
   document: { querySelector: () => ({ scrollIntoView() {} }) },
   window: { confirm() { prompts++; return accept; }, addEventListener(type, handler) { assert.equal(type, 'beforeunload'); beforeUnload = handler; } },
   setMessage() {}
@@ -64,6 +65,16 @@ assert.equal(fields.name.value, '', 'An active save cannot replace the current f
 context.setLicenseSavePending(false);
 assert.ok(Object.values(fields).every((field) => !field.readOnly));
 assert.equal(context.saveLicenseButton.disabled, false);
+context.jsonImportPending = true;
+prevented = false;
+const importLeaveEvent = { preventDefault() { prevented = true; } };
+beforeUnload(importLeaveEvent);
+assert.equal(prevented, true, 'Pending imports warn before leaving even with a clean form');
+assert.equal(importLeaveEvent.returnValue, '');
+context.jsonImportPending = false;
+prevented = false;
+beforeUnload({ preventDefault() { prevented = true; } });
+assert.equal(prevented, false, 'Finished imports do not leave a stale warning');
 console.log('Online unsaved form checks passed (switching, copying, leave and reset).');
 
 async function verifyPendingWrites() {

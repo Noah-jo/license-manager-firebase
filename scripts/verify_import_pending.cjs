@@ -12,10 +12,11 @@ function section(startMarker, endMarker) {
 const availability = section('function setSyncAvailability(', 'function isConfigured(');
 const changes = section('jsonImport.addEventListener("change"', 'jsonImportLabel.addEventListener(');
 const submit = section('importJsonSubmit.addEventListener("click"', '\nif (!isConfigured())');
+const logout = section('$("logout").addEventListener("click"', 'retrySyncButton.addEventListener(');
 function control() { return { disabled: false, attributes: {}, classList: { toggle() {} }, setAttribute(key, value) { this.attributes[key] = value; } }; }
 
 async function check(outcome) {
-    let handler, changeHandler, resolve, reject, calls = 0, summary = '';
+    let handler, changeHandler, logoutHandler, resolve, reject, calls = 0, summary = '';
     const file = {};
     const jsonImport = { ...control(), value: 'backup.json', addEventListener: (_, fn) => changeHandler = fn };
     const importJsonSubmit = { ...control(), addEventListener: (_, fn) => handler = fn };
@@ -25,6 +26,10 @@ async function check(outcome) {
         pendingJsonFile: file, pendingImportCount: 3, importRequestId: 0,
         jsonImport, importJsonSubmit, jsonImportLabel: label,
         saveLicenseButton: control(), syncBoundControls: [jsonImport], licenseMessage: {},
+        state: { unlocked: true },
+        $: () => ({ addEventListener: (_, fn) => logoutHandler = fn }),
+        confirmDiscardLicenseForm: () => true, resetLicenseForm() {},
+        sessionStorage: { removeItem() {} }, setConnectionState() {}, showOnly() {},
         setMessage() {}, setImportSummary(message) { summary = message; },
         formatFirebaseError: error => error.message,
         previewJsonBackup() { throw new Error('File changes must be ignored while importing'); },
@@ -34,7 +39,7 @@ async function check(outcome) {
             return new Promise((res, rej) => { resolve = res; reject = rej; });
         }
     });
-    vm.runInContext(availability + changes + submit, context);
+    vm.runInContext(availability + changes + submit + logout, context);
     const pending = handler();
     assert.equal(context.jsonImportPending, true);
     assert.equal(jsonImport.disabled, true);
@@ -49,6 +54,9 @@ async function check(outcome) {
     await changeHandler({ target: { files: [{}] } });
     assert.equal(calls, 1);
     assert.equal(context.pendingJsonFile, file);
+    logoutHandler();
+    assert.equal(context.state.unlocked, true, 'Pending imports cannot log out');
+    assert.match(summary, /等待處理結束後再登出/);
     if (outcome === 'failure') reject(new Error('Test failure'));
     else resolve({ cancelled: outcome === 'cancel' });
     await pending;
@@ -62,6 +70,8 @@ async function check(outcome) {
     assert.match(summary, outcome === 'failure' ? /匯入失敗/ : outcome === 'cancel' ? /已取消匯入/ : /匯入完成/);
     context.setSyncAvailability(false);
     assert.equal(jsonImport.disabled, true, 'Offline import remains disabled');
+    logoutHandler();
+    assert.equal(context.state.unlocked, false, 'Logout works again after import ends');
 }
 Promise.all(['success', 'failure', 'cancel'].map(check))
     .then(() => console.log('Online pending import checks passed (locks, sync events, duplicate submits, completion and failure).'))
