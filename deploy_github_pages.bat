@@ -15,6 +15,9 @@ echo Running local tests...
 node --check "%REPO_DIR%public\app.js" || goto :local_error
 git -C "%ROOT_DIR%" diff --quiet --exit-code || goto :local_dirty_error
 git -C "%ROOT_DIR%" diff --cached --quiet --exit-code || goto :local_dirty_error
+set "LOCAL_WORKTREE_STATUS="
+for /f "delims=" %%S in ('git -C "%ROOT_DIR%" status --porcelain -uall') do set "LOCAL_WORKTREE_STATUS=%%S"
+if defined LOCAL_WORKTREE_STATUS goto :local_dirty_error
 call "%ROOT_DIR%\build_exe.bat" || goto :local_error
 
 cd /d "%REPO_DIR%"
@@ -22,7 +25,7 @@ cd /d "%REPO_DIR%"
 for /f "delims=" %%B in ('git branch --show-current') do set "CURRENT_BRANCH=%%B"
 if not "%CURRENT_BRANCH%"=="codex/firebase-web" goto :branch_error
 set "WORKTREE_STATUS="
-for /f "delims=" %%S in ('git status --porcelain --untracked-files=all') do set "WORKTREE_STATUS=%%S"
+for /f "delims=" %%S in ('git status --porcelain -uall') do set "WORKTREE_STATUS=%%S"
 if defined WORKTREE_STATUS goto :dirty_error
 
 echo Checking GitHub CLI login...
