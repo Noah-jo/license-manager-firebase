@@ -41,6 +41,7 @@ const expiryField = $("expiry");
 const expiryRequiredMark = $("expiry-required-mark");
 const cancelEdit = $("cancel-edit");
 const licensesBody = $("licenses-body");
+const licenseTable = $("license-table");
 const licenseMessage = $("license-message");
 const jsonImport = $("json-import");
 const settingsForm = $("settings-form");
@@ -315,6 +316,7 @@ function renderStats(visible) {
 }
 
 function renderLicenses() {
+  licenseTable.setAttribute("aria-busy", String(!state.licenseLoaded));
   if (!state.licenseLoaded) {
     $("stat-total").textContent = "—";
     $("stat-expired").textContent = "—";

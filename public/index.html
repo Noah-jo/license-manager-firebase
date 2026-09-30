@@ -168,10 +168,10 @@
       <section id="license-list" class="panel table-section">
         <div class="panel-heading list-heading">
           <div class="heading-group"><span class="section-number">03</span><div><h2>授權清單</h2><p>依到期日順序顯示，風險項目會自動高亮</p></div></div>
-          <span id="visible-count" class="result-count">0 項結果</span>
+          <span id="visible-count" class="result-count" role="status" aria-live="polite" aria-atomic="true">0 項結果</span>
         </div>
         <div class="table-wrap">
-          <table>
+          <table id="license-table" aria-busy="true">
             <caption class="sr-only">軟件授權清單，可按欄位按鈕排序</caption>
             <thead><tr>
               <th scope="col" aria-sort="none"><button type="button" class="sort-button" data-sort-key="name" aria-label="按軟件名稱排序">軟件名稱 <span class="sort-indicator" aria-hidden="true">↕</span></button></th>
