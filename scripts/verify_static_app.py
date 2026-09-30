@@ -17,6 +17,7 @@ required_html = {
     'id="json-import-label"': "JSON import control state",
     'id="settings-form"': "password settings form",
     'id="connection-dot"': "connection status indicator",
+    'id="current-user" aria-live="polite"': "announced sync status",
     'id="retry-sync"': "sync retry control",
     'id="clear-filters"': "clear filters button",
     'data-sort-key="expiry"': "sortable license table",

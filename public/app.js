@@ -805,7 +805,7 @@ licensesBody.addEventListener("click", async (event) => {
       return;
     }
     const license = state.licenses.find((item) => item.id === deleteId);
-    const displayName = license?.name?.trim() || "這筆授權資料";
+    const displayName = String(license?.name ?? "").trim() || "這筆授權資料";
     if (!confirm(`確定要刪除「${displayName}」嗎？此動作無法復原。`)) return;
     try {
       if (!syncReady) {
