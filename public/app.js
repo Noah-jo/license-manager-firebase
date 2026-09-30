@@ -811,7 +811,8 @@ function exportJsonBackup() {
     price: Number(item.price || 0),
     pic: item.pic || "",
     user: item.user || "",
-    subLink: safeHttpUrl(item.subLink) || "",
+    // Backups preserve stored text; link safety belongs to rendering and input validation.
+    subLink: String(item.subLink ?? ""),
     remarks: item.remarks || ""
   }));
   downloadFile(

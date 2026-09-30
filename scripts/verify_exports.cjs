@@ -47,3 +47,22 @@ for (const direction of ['asc', 'desc']) {
   }
 }
 console.log('Export checks passed (multiline Excel cells, CSV and escaped text).');
+
+context.licenseMessage = {};
+context.setMessage = () => {};
+context.state = { licenses: [] };
+vm.runInContext(section('function exportJsonBackup(', 'function startLicenseListener('), context);
+for (const subLink of ['https://[bad', 'javascript:alert(1)', '  https://example.com/path  ', '', null, undefined]) {
+  context.state.licenses = [{ name: 'Legacy backup', seats: '1', subLink, remarks }];
+  context.exportJsonBackup();
+  assert.equal(output.type, 'application/json;charset=utf-8');
+  const records = JSON.parse(output.content);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].subLink, subLink ?? '', 'Backup must not discard or normalize stored link text');
+  assert.equal(records[0].remarks, remarks);
+}
+context.syncReady = false;
+output = null;
+context.exportJsonBackup();
+assert.equal(output, null, 'Unsynchronized data must not be downloaded as a complete backup');
+console.log('JSON backup checks passed (raw legacy links retained, multiline text and sync gate).');
