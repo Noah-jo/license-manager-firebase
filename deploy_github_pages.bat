@@ -1,5 +1,6 @@
 @echo off
 setlocal
+set "DEPLOY_EXIT_CODE=1"
 
 set "REPO_DIR=%~dp0"
 set "ROOT_DIR=%~dp0.."
@@ -45,6 +46,7 @@ echo.
 echo GitHub Actions will deploy the pushed commit once:
 echo https://noah-jo.github.io/license-manager-firebase/
 echo.
+set "DEPLOY_EXIT_CODE=0"
 goto :finish
 
 :local_error
@@ -84,4 +86,4 @@ echo Push failed. Check the error above.
 goto :finish
 
 :finish
-endlocal
+endlocal & exit /b %DEPLOY_EXIT_CODE%
